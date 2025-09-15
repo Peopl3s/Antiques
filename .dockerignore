@@ -1,0 +1,52 @@
+# Игнорируем системные и IDE файлы
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Игнорируем виртуальные окружения Python
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# Игнорируем кэш и логи Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+*.log
+logs/
+
+# Игнорируем зависимости и сборки
+node_modules/
+dist/
+build/
+*.egg-info/
+*.egg
+.cache/
+
+# Игнорируем конфигурационные файлы (кроме нужных)
+.env*.local
+.env
+docker-compose.override.yml
+docker-compose.*.yml
+
+# Игнорируем тестовые и документационные файлы
+tests/
+test/
+docs/
+examples/
+
+# Игнорируем Git
+.git/
+.gitignore
+.gitmodules
+
+# Игнорируем временные файлы
+tmp/
+temp/
