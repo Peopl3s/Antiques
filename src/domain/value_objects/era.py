@@ -1,0 +1,18 @@
+from dataclasses import dataclass
+from typing import ClassVar, Set, final
+
+
+@final
+@dataclass(frozen=True, slots=True, kw_only=True, order=True)
+class Era:
+    _allowed_values: ClassVar[Set[str]] = {
+        "paleolithic", "neolithic", "bronze_age", "iron_age", "antiquity", "middle_ages", "modern"
+    }
+    value: str
+
+    def __post_init__(self) -> None:
+        if self.value not in self._allowed_values:
+            raise ValueError(f"Invalid era: {self.value}")
+
+    def __str__(self) -> str:
+        return self.value
