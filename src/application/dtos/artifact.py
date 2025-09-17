@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
-from typing import Literal, Optional, Self
+from typing import Literal, Optional, Self, final
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+@final
 class MaterialDTO(BaseModel):
     model_config = ConfigDict(
         frozen=True,
@@ -16,6 +17,7 @@ class MaterialDTO(BaseModel):
     ]
 
 
+@final
 class EraDTO(BaseModel):
     model_config = ConfigDict(
         frozen=True,
@@ -33,6 +35,7 @@ class EraDTO(BaseModel):
     ]
 
 
+@final
 class ArtifactDTO(BaseModel):
     model_config = ConfigDict(
         frozen=True,
@@ -68,6 +71,7 @@ class ArtifactDTO(BaseModel):
         return self
 
 
+@final
 class ArtifactAdmissionNotificationDTO(BaseModel):
     model_config = ConfigDict(
         frozen=True,
@@ -80,6 +84,7 @@ class ArtifactAdmissionNotificationDTO(BaseModel):
     department: str
 
 
+@final
 class ArtifactCatalogPublicationDTO(BaseModel):
     model_config = ConfigDict(
         frozen=True,

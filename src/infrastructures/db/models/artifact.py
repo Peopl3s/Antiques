@@ -1,0 +1,68 @@
+from datetime import datetime, timezone
+from typing import Optional, Type
+from uuid import UUID
+
+from sqlalchemy import DateTime, String, Text, Index, func
+from sqlalchemy.orm import Mapped, mapped_column, registry
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+
+from src.domain.entities.artifact import ArtifactEntity
+from src.domain.value_objects.era import Era
+from src.domain.value_objects.material import Material
+
+mapper_registry = registry()
+
+@mapper_registry.mapped
+class ArtifactModel:
+    __tablename__ = "artifacts"
+    __table_args__ = (
+        Index("ix_artifacts_name", "name"),
+        Index("ix_artifacts_department", "department"),
+    )
+
+    inventory_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+    )
+    acquisition_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    name: Mapped[str] = mapped_column(String(length=255), nullable=False)
+    department: Mapped[str] = mapped_column(String(length=255), nullable=False)
+    era: Mapped[str] = mapped_column(String(length=50), nullable=False)
+    material: Mapped[str] = mapped_column(String(length=50), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    def __repr__(self) -> str:
+        return (
+            f"<ArtifactModel(inventory_id={self.inventory_id!s}, "
+            f"name={self.name!r}, department={self.department!r})>"
+        )
+
+    def to_dataclass(self) -> ArtifactEntity:
+        return ArtifactEntity(
+            inventory_id=self.inventory_id,
+            created_at=self.created_at,
+            acquisition_date=self.acquisition_date,
+            name=self.name,
+            department=self.department,
+            era=Era(self.era),
+            material=Material(self.material),
+            description=self.description,
+        )
+
+    @classmethod
+    def from_dataclass(cls: Type['ArtifactModel'], artifact: ArtifactEntity) -> 'ArtifactModel':
+        return cls(
+            inventory_id=artifact.inventory_id,
+            created_at=artifact.created_at,
+            acquisition_date=artifact.acquisition_date,
+            name=artifact.name,
+            department=artifact.department,
+            era=str(artifact.era),
+            material=str(artifact.material),
+            description=artifact.description,
+        )

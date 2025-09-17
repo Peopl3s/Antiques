@@ -1,8 +1,10 @@
+from typing import final
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
 
+@final
 class ArtifactInventoryIdRequestDTO(BaseModel):
     inventory_id: UUID
 
