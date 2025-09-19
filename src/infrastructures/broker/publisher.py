@@ -17,6 +17,7 @@ class KafkaPublisher(MessageBrokerPublisherProtocol):
     async def publish_new_artifact(self, artifact: ArtifactCatalogPublicationDTO) -> None:
         try:
             await self.broker.publish(
+                key=artifact.inventory_id,
                 message=json.dumps(artifact.model_dump(), ensure_ascii=False),
                 topic="new_artifacts",
             )

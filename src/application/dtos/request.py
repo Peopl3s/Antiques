@@ -6,7 +6,7 @@ from pydantic import BaseModel, field_validator
 
 @final
 class ArtifactInventoryIdRequestDTO(BaseModel):
-    inventory_id: UUID
+    id: UUID
 
     @field_validator('inventory_id')
     def check_not_nil_uuid(cls, value: UUID) -> UUID:

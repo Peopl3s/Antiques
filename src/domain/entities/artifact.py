@@ -18,3 +18,4 @@ class ArtifactEntity:
     era: Era
     material: Material
     description: Optional[str] = None
+

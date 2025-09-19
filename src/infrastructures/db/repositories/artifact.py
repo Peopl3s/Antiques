@@ -23,6 +23,19 @@ class ArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
         return artifact_model.to_dataclass()
 
     @override
-    async def save(self, artifact: ArtifactModel) -> None:
-        self._session.add(artifact)
+    async def save(self, artifact: ArtifactEntity) -> None:
+        stmt = select(ArtifactModel).where(ArtifactModel.inventory_id == artifact.inventory_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+
+        if model:
+            model.name = artifact.name
+            model.era = artifact.era.value
+            model.material = artifact.material.value
+            model.description = artifact.description
+            model.acquisition_date = artifact.acquisition_date
+            model.department = artifact.department
+        else:
+            model = ArtifactModel.from_dataclass(artifact)
+        self._session.add(model)
         await self._session.commit()
