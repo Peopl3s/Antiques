@@ -21,15 +21,16 @@ class RegisterArtifactUseCase:
     catalog_api_client: PublicCatalogAPIProtocol
     message_broker: MessageBrokerPublisherProtocol
 
-    async def execute(self, inventory_id: UUID) -> ArtifactDTO:
+    async def execute(self, inventory_id: str | UUID) -> Optional[ArtifactDTO]:
         logger.info(f"Starting artifact registration for inventory_id={inventory_id}")
 
-        artifact_entity: ArtifactEntity = await self.repository.get_by_inventory_id(str(inventory_id))
+        artifact_dto: Optional[ArtifactDTO] = None
+        artifact_entity: Optional[ArtifactEntity] = await self.repository.get_by_inventory_id(str(inventory_id))
         if not artifact_entity:
             logger.info("Artifact not found locally, fetching from external service...")
             try:
-                artifact_dto: ArtifactDTO = await self.museum_api_client.fetch_artifact(inventory_id)
-                artifact_entity: ArtifactEntity = ArtifactMapper.to_entity(artifact_dto)
+                artifact_dto = await self.museum_api_client.fetch_artifact(inventory_id)
+                artifact_entity = ArtifactMapper.to_entity(artifact_dto)
                 await self.repository.save(artifact_entity)
             except Exception as e:
                 logger.error(f"Failed to fetch artifact from external service: {e}")
@@ -55,13 +56,11 @@ class RegisterArtifactUseCase:
                 material=MaterialDTO(value=artifact_entity.material.value),
                 description=artifact_entity.description,
             )
-            public_id = await self.catalog_api_client.publish_artifact(publication_dto)
+            public_id: str = await self.catalog_api_client.publish_artifact(publication_dto)
             logger.info(f"Artifact published to catalog with public_id={public_id}")
         except Exception as e:
             logger.error(f"Failed to publish artifact to catalog: {e}")
             raise Exception("Could not publish artifact to catalog") from e
-
-        # Сохраняем обновленный артефакт (с public_id)
 
         logger.info(f"Artifact registration completed for inventory_id={inventory_id}")
         return artifact_dto
