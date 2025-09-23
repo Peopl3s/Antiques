@@ -3,6 +3,7 @@ from faststream.kafka import KafkaBroker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from httpx import AsyncClient
 
+from src.application.mappers import ArtifactMapper
 from src.infrastructures.broker.publisher import KafkaPublisher
 from src.infrastructures.db.repositories.artifact import ArtifactRepositorySQLAlchemy
 from src.infrastructures.db.session import get_session_factory
@@ -45,7 +46,7 @@ class BrokerProvider(Provider):
 class RepositoryProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_artifact_repository(self, session: AsyncSession) -> ArtifactRepositorySQLAlchemy:
-        return ArtifactRepositorySQLAlchemy(session)
+        return ArtifactRepositorySQLAlchemy(session=session)
 
 
 class ServiceProvider(Provider):
@@ -53,15 +54,15 @@ class ServiceProvider(Provider):
     def get_external_museum_api_client(
         self, client: AsyncClient, settings: Settings
     ) -> ExternalMuseumAPIClient:
-        return ExternalMuseumAPIClient(settings.EXTERNAL_API_BASE_URL, client)
+        return ExternalMuseumAPIClient(base_url=settings.EXTERNAL_API_BASE_URL, client=client)
 
     @provide(scope=Scope.REQUEST)
     def get_public_catalog_api_client(self, client: AsyncClient, settings: Settings) -> PublicCatalogAPIClient:
-        return PublicCatalogAPIClient(settings.CATALOG_API_BASE_URL, client)
+        return PublicCatalogAPIClient(base_url=settings.CATALOG_API_BASE_URL, client=client)
 
     @provide(scope=Scope.REQUEST)
     def get_message_broker(self, broker: KafkaBroker) -> KafkaPublisher:
-        return KafkaPublisher(broker)
+        return KafkaPublisher(broker=broker)
 
 
 class UseCaseProvider(Provider):
@@ -72,10 +73,12 @@ class UseCaseProvider(Provider):
         museum_api_client: ExternalMuseumAPIClient,
         catalog_api_client: PublicCatalogAPIClient,
         message_broker: KafkaPublisher,
+        artifact_mapper: ArtifactMapper,
     ) -> RegisterArtifactUseCase:
         return RegisterArtifactUseCase(
             repository=repository,
             museum_api_client=museum_api_client,
             catalog_api_client=catalog_api_client,
             message_broker=message_broker,
+            artifact_mapper=artifact_mapper,
         )

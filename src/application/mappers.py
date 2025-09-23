@@ -1,16 +1,20 @@
+from dataclasses import dataclass
+from typing import final
+
 from src.application.dtos.artifact import ArtifactDTO
+from src.application.interfaces.mappers import DtoEntityMapperProtocol
 from src.domain.entities.artifact import ArtifactEntity
 from src.domain.value_objects.era import Era
 from src.domain.value_objects.material import Material
 
 
-class ArtifactMapper:
-    @staticmethod
-    def to_dto(entity: ArtifactEntity) -> ArtifactDTO:
+@final
+@dataclass(frozen=True, slots=True)
+class ArtifactMapper(DtoEntityMapperProtocol):
+    def to_dto(self, entity: ArtifactEntity) -> ArtifactDTO:
         return ArtifactDTO.model_validate(entity)
 
-    @staticmethod
-    def to_entity(dto: ArtifactDTO) -> ArtifactEntity:
+    def to_entity(self, dto: ArtifactDTO) -> ArtifactEntity:
         return ArtifactEntity(
             inventory_id=dto.inventory_id,
             name=dto.name,

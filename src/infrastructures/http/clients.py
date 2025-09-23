@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @final
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class ExternalMuseumAPIClient(ExternalMuseumAPIProtocol):
     base_url: str
     client: httpx.AsyncClient
@@ -26,7 +26,7 @@ class ExternalMuseumAPIClient(ExternalMuseumAPIProtocol):
         wait_jitter=1.0,
     )
     async def fetch_artifact(self, inventory_id: str | UUID) -> ArtifactDTO:
-        inventory_id_str = str(inventory_id)
+        inventory_id_str = str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
         url = f"{self.base_url}/artifacts/{inventory_id_str}"
         logger.debug(f"Fetching artifact from URL: {url}")
 
@@ -63,7 +63,7 @@ class ExternalMuseumAPIClient(ExternalMuseumAPIProtocol):
 
 
 @final
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class PublicCatalogAPIClient(PublicCatalogAPIProtocol):
     base_url: str
     client: httpx.AsyncClient
@@ -75,15 +75,6 @@ class PublicCatalogAPIClient(PublicCatalogAPIProtocol):
         wait_jitter=1.0,
     )
     async def publish_artifact(self, artifact: ArtifactCatalogPublicationDTO) -> str:
-        """
-        Publishes an artifact to the public catalog and returns its public ID.
-
-        Raises:
-            httpx.HTTPStatusError: If the response status is not successful.
-            httpx.RequestError: If there is a network problem.
-            ValueError: If the response JSON does not contain 'public_id'.
-            Exception: For any other unexpected errors.
-        """
         url = f"{self.base_url}/items"
         payload = {
             "inventory_id": artifact.inventory_id,

@@ -49,8 +49,8 @@ class ArtifactModel:
             acquisition_date=self.acquisition_date,
             name=self.name,
             department=self.department,
-            era=Era(self.era),
-            material=Material(self.material),
+            era=Era(value=self.era),
+            material=Material(value=self.material),
             description=self.description,
         )
 

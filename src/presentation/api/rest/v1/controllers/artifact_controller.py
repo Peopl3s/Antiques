@@ -20,6 +20,7 @@ async def get_artifact(
     try:
         artifact = await use_case.execute(inventory_id)
         return artifact
+    #TODO: Проработать исключения
     except ArtifactNotFoundException:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Artifact not found")
     except Exception as e:

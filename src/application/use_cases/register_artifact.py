@@ -1,14 +1,16 @@
 import logging
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, cast, Literal
 from uuid import UUID
 
 from src.application.dtos.artifact import ArtifactDTO, ArtifactAdmissionNotificationDTO, ArtifactCatalogPublicationDTO, \
     EraDTO, MaterialDTO
+from src.application.exceptions import FailedFetchArtifactMuseumAPIException, \
+    FailedPublishArtifactMessageBrokerException, FailedPublishArtifactInCatalogException, ArtifactNotFoundError
 from src.application.interfaces.http_clients import ExternalMuseumAPIProtocol, PublicCatalogAPIProtocol
+from src.application.interfaces.mappers import DtoEntityMapperProtocol
 from src.application.interfaces.message_broker import MessageBrokerPublisherProtocol
 from src.application.interfaces.repositories import ArtifactRepositoryProtocol
-from src.application.mappers import ArtifactMapper
 from src.domain.entities.artifact import ArtifactEntity
 
 logger = logging.getLogger(__name__)
@@ -20,9 +22,11 @@ class RegisterArtifactUseCase:
     museum_api_client: ExternalMuseumAPIProtocol
     catalog_api_client: PublicCatalogAPIProtocol
     message_broker: MessageBrokerPublisherProtocol
+    artifact_mapper: DtoEntityMapperProtocol
 
     async def execute(self, inventory_id: str | UUID) -> Optional[ArtifactDTO]:
-        logger.info(f"Starting artifact registration for inventory_id={inventory_id}")
+        inventory_id_str = str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
+        logger.info("Starting artifact registration", extra={"inventory_id": inventory_id_str})
 
         artifact_dto: Optional[ArtifactDTO] = None
         artifact_entity: Optional[ArtifactEntity] = await self.repository.get_by_inventory_id(str(inventory_id))
@@ -30,11 +34,23 @@ class RegisterArtifactUseCase:
             logger.info("Artifact not found locally, fetching from external service...")
             try:
                 artifact_dto = await self.museum_api_client.fetch_artifact(inventory_id)
-                artifact_entity = ArtifactMapper.to_entity(artifact_dto)
+                artifact_entity = self.artifact_mapper.to_entity(artifact_dto)
                 await self.repository.save(artifact_entity)
+            except ArtifactNotFoundError as e:
+                logger.error(
+                    "Artifact not found in external museum API",
+                    extra={"inventory_id": inventory_id, "error": str(e)},
+                    exc_info=True
+                )
             except Exception as e:
-                logger.error(f"Failed to fetch artifact from external service: {e}")
-                raise Exception("Could not fetch artifact from external service") from e
+                logger.error(
+                    "Failed to fetch artifact from external museum API",
+                    extra={"inventory_id": inventory_id, "error": str(e)},
+                    exc_info=True
+                )
+                raise FailedFetchArtifactMuseumAPIException(
+                    "Could not fetch artifact from external service", str(e)
+                ) from e
 
         artifact_notify_dto = ArtifactAdmissionNotificationDTO(
             inventory_id=artifact_entity.inventory_id,
@@ -44,23 +60,52 @@ class RegisterArtifactUseCase:
         )
         try:
             await self.message_broker.publish_new_artifact(artifact_notify_dto)
-            logger.info("Published new artifact event to message broker")
+            logger.info("Published new artifact event to message broker", extra={"inventory_id": inventory_id_str})
         except Exception as e:
-            logger.warning(f"Failed to publish message to broker: {e}")
-
-        try:
-            publication_dto = ArtifactCatalogPublicationDTO(
-                inventory_id=artifact_entity.inventory_id,
-                name=artifact_entity.name,
-                era=EraDTO(value=artifact_entity.era.value),
-                material=MaterialDTO(value=artifact_entity.material.value),
-                description=artifact_entity.description,
+            logger.warning(
+                "Failed to publish message to broker (non-critical)",
+                extra={"inventory_id": artifact_entity.inventory_id, "error": str(e)},
+                exc_info=True
             )
-            public_id: str = await self.catalog_api_client.publish_artifact(publication_dto)
-            logger.info(f"Artifact published to catalog with public_id={public_id}")
-        except Exception as e:
-            logger.error(f"Failed to publish artifact to catalog: {e}")
-            raise Exception("Could not publish artifact to catalog") from e
+            raise FailedPublishArtifactMessageBrokerException(
+                "Failed to publish message to broker", str(e)
+            ) from e
 
-        logger.info(f"Artifact registration completed for inventory_id={inventory_id}")
+        publication_dto = ArtifactCatalogPublicationDTO(
+            inventory_id=artifact_entity.inventory_id,
+            name=artifact_entity.name,
+            era=EraDTO(
+                value=cast(
+                    Literal[
+                        "paleolithic", "neolithic", "bronze_age", "iron_age", "antiquity", "middle_ages", "modern"
+                    ],
+                    artifact_entity.era.value
+                )
+            ),
+            material=MaterialDTO(
+                value=cast(
+                    Literal["ceramic", "metal", "stone", "glass", "bone", "wood", "textile", "other"],
+                    artifact_entity.material.value
+                )
+            ),
+            description=artifact_entity.description,
+        )
+        try:
+            public_id: str = await self.catalog_api_client.publish_artifact(publication_dto)
+            logger.info(
+                "Artifact published to catalog",
+                extra={"inventory_id": artifact_entity.inventory_id, "public_id": public_id}
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to publish artifact to catalog",
+                extra={"inventory_id": artifact_entity.inventory_id, "error": str(e)},
+                exc_info=True
+            )
+            raise FailedPublishArtifactInCatalogException("Could not publish artifact to catalog", str(e)) from e
+
+        logger.info(
+            "Artifact registration completed",
+            extra={"inventory_id": inventory_id_str}
+        )
         return artifact_dto

@@ -1,25 +1,26 @@
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import final
 
 from faststream.kafka import KafkaBroker
 
-from src.application.dtos.artifact import ArtifactCatalogPublicationDTO
+from src.application.dtos.artifact import ArtifactAdmissionNotificationDTO
 from src.application.interfaces.message_broker import MessageBrokerPublisherProtocol
 
 
 @final
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class KafkaPublisher(MessageBrokerPublisherProtocol):
     broker: KafkaBroker
+    topic: str = field(default="new_artifacts")
 
-    async def publish_new_artifact(self, artifact: ArtifactCatalogPublicationDTO) -> None:
+    async def publish_new_artifact(self, artifact: ArtifactAdmissionNotificationDTO) -> None:
         try:
             await self.broker.publish(
                 key=artifact.inventory_id,
                 message=json.dumps(artifact.model_dump(), ensure_ascii=False),
-                topic="new_artifacts",
+                topic=self.topic,
             )
         except Exception as e:
             logging.error(f"Failed to publish artifact: {e}")

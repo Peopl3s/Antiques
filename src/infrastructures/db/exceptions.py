@@ -1,8 +1,3 @@
-class RepositoryError(Exception):
-    """Базовое исключение репозитория."""
-    pass
+class RepositoryError(Exception): ...
 
-
-class RepositoryConflictError(RepositoryError):
-    """Ошибка возникающая при нарушении ограничений целостности (например, unique)."""
-    pass
+class RepositoryConflictError(RepositoryError): ...
