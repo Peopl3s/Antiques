@@ -1,15 +1,14 @@
-import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+import logging
 
-from fastapi import FastAPI
 from dishka import AsyncContainer, make_async_container
 from dishka.integrations.fastapi import setup_dishka
+from fastapi import FastAPI
 
 from src.config.ioc.di import get_providers
 from src.config.logging import setup_logging
 from src.presentation.api.rest.v1.routers import api_v1_router
-
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -29,8 +28,8 @@ def create_app() -> FastAPI:
         version="1.0.0",
         description="API для управления артефактами в музее",
         lifespan=lifespan,
-        docs_url="/api/docs",        # Swagger UI
-        redoc_url="/api/redoc",      # ReDoc
+        docs_url="/api/docs",  # Swagger UI
+        redoc_url="/api/redoc",  # ReDoc
         openapi_url="/api/openapi.json",
     )
 

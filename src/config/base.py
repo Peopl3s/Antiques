@@ -1,4 +1,5 @@
 from typing import Literal, final
+
 from pydantic import Field, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings
 
@@ -15,13 +16,21 @@ class Settings(BaseSettings):
     postgres_port: int = Field(5432, alias="POSTGRES_PORT")
     postgres_db: str = Field(..., alias="POSTGRES_DB")
 
-    museum_api_base: str = Field("https://api.antiquarium-museum.ru", alias="MUSEUM_API_BASE")
-    catalog_api_base: str = Field("https://catalog.antiquarium-museum.ru", alias="CATALOG_API_BASE")
+    museum_api_base: str = Field(
+        "https://api.antiquarium-museum.ru", alias="MUSEUM_API_BASE"
+    )
+    catalog_api_base: str = Field(
+        "https://catalog.antiquarium-museum.ru", alias="CATALOG_API_BASE"
+    )
 
     http_timeout: float = Field(10.0, alias="HTTP_TIMEOUT")
 
-    broker_url: str = Field(..., alias="BROKER_URL")  # e.g. amqp://guest:guest@localhost:5672/
-    broker_new_artifact_queue: str = Field("new_artifacts", alias="BROKER_NEW_ARTIFACT_QUEUE")
+    broker_url: str = Field(
+        ..., alias="BROKER_URL"
+    )  # e.g. amqp://guest:guest@localhost:5672/
+    broker_new_artifact_queue: str = Field(
+        "new_artifacts", alias="BROKER_NEW_ARTIFACT_QUEUE"
+    )
 
     publish_retries: int = Field(3, alias="PUBLISH_RETRIES")
     publish_retry_backoff: float = Field(0.5, alias="PUBLISH_RETRY_BACKOFF")

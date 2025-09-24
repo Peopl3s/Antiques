@@ -1,6 +1,6 @@
+from dataclasses import dataclass, field
 import json
 import logging
-from dataclasses import dataclass, field
 from typing import final
 
 from faststream.kafka import KafkaBroker
@@ -15,7 +15,9 @@ class KafkaPublisher(MessageBrokerPublisherProtocol):
     broker: KafkaBroker
     topic: str = field(default="new_artifacts")
 
-    async def publish_new_artifact(self, artifact: ArtifactAdmissionNotificationDTO) -> None:
+    async def publish_new_artifact(
+        self, artifact: ArtifactAdmissionNotificationDTO
+    ) -> None:
         try:
             await self.broker.publish(
                 key=artifact.inventory_id,

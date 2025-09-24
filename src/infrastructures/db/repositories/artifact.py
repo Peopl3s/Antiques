@@ -1,14 +1,17 @@
 from dataclasses import dataclass
-from typing import Optional, final
+from typing import final
 from uuid import UUID
 
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from src.application.interfaces.repositories import ArtifactRepositoryProtocol
 from src.domain.entities.artifact import ArtifactEntity
-from src.infrastructures.db.exceptions import RepositorySaveError, RepositoryConflictError
+from src.infrastructures.db.exceptions import (
+    RepositoryConflictError,
+    RepositorySaveError,
+)
 from src.infrastructures.db.models.artifact import ArtifactModel
 
 
@@ -17,20 +20,28 @@ from src.infrastructures.db.models.artifact import ArtifactModel
 class ArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
     session: AsyncSession
 
-    async def get_by_inventory_id(self, inventory_id: str | UUID) -> Optional[ArtifactEntity]:
+    async def get_by_inventory_id(
+        self, inventory_id: str | UUID
+    ) -> ArtifactEntity | None:
         try:
-            stmt = select(ArtifactModel).where(ArtifactModel.inventory_id == inventory_id)
+            stmt = select(ArtifactModel).where(
+                ArtifactModel.inventory_id == inventory_id
+            )
             result = await self.session.execute(stmt)
             artifact_model = result.scalar_one_or_none()
             if artifact_model is None:
                 return None
             return artifact_model.to_dataclass()
         except SQLAlchemyError as e:
-            raise RepositorySaveError(f"Failed to retrieve artifact by inventory_id '{inventory_id}': {e}") from e
+            raise RepositorySaveError(
+                f"Failed to retrieve artifact by inventory_id '{inventory_id}': {e}"
+            ) from e
 
     async def save(self, artifact: ArtifactEntity) -> None:
         try:
-            stmt = select(ArtifactModel).where(ArtifactModel.inventory_id == artifact.inventory_id)
+            stmt = select(ArtifactModel).where(
+                ArtifactModel.inventory_id == artifact.inventory_id
+            )
             result = await self.session.execute(stmt)
             model = result.scalar_one_or_none()
 
@@ -48,10 +59,16 @@ class ArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
             await self.session.commit()
         except IntegrityError as e:
             await self.session.rollback()
-            raise RepositoryConflictError(f"Conflict while saving artifact '{artifact.inventory_id}': {e}") from e
+            raise RepositoryConflictError(
+                f"Conflict while saving artifact '{artifact.inventory_id}': {e}"
+            ) from e
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise RepositorySaveError(f"Failed to save artifact '{artifact.inventory_id}': {e}") from e
+            raise RepositorySaveError(
+                f"Failed to save artifact '{artifact.inventory_id}': {e}"
+            ) from e
         except Exception as e:
             await self.session.rollback()
-            raise RepositorySaveError(f"Unexpected error while saving artifact '{artifact.inventory_id}': {e}") from e
+            raise RepositorySaveError(
+                f"Unexpected error while saving artifact '{artifact.inventory_id}': {e}"
+            ) from e

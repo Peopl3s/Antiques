@@ -1,4 +1,4 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 
 def get_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:

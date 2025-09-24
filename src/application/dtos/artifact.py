@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import Literal, Optional, Self, final
+from datetime import UTC, datetime
+from typing import Literal, Self, final
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -13,7 +13,14 @@ class MaterialDTO(BaseModel):
         str_strip_whitespace=True,
     )
     value: Literal[
-        "ceramic", "metal", "stone", "glass", "bone", "wood", "textile", "other"
+        "ceramic",
+        "metal",
+        "stone",
+        "glass",
+        "bone",
+        "wood",
+        "textile",
+        "other",
     ]
 
 
@@ -47,15 +54,26 @@ class ArtifactDTO(BaseModel):
 
     inventory_id: UUID = Field(..., description="Unique identifier of the artifact")
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        description="Timestamp when the artifact record was created (UTC)"
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when the artifact record was created (UTC)",
     )
-    acquisition_date: datetime = Field(..., description="Date when the artifact was acquired")
-    name: str = Field(..., min_length=2, max_length=100, description="Name of the artifact")
-    department: str = Field(..., min_length=2, max_length=100, description="Department responsible for the artifact")
+    acquisition_date: datetime = Field(
+        ..., description="Date when the artifact was acquired"
+    )
+    name: str = Field(
+        ..., min_length=2, max_length=100, description="Name of the artifact"
+    )
+    department: str = Field(
+        ...,
+        min_length=2,
+        max_length=100,
+        description="Department responsible for the artifact",
+    )
     era: EraDTO = Field(..., description="Historical era of the artifact")
     material: MaterialDTO = Field(..., description="Material of the artifact")
-    description: Optional[str] = Field(None, max_length=1000, description="Optional description of the artifact")
+    description: str | None = Field(
+        None, max_length=1000, description="Optional description of the artifact"
+    )
 
     @field_validator("acquisition_date")
     @classmethod
@@ -95,4 +113,4 @@ class ArtifactCatalogPublicationDTO(BaseModel):
     name: str
     era: EraDTO
     material: MaterialDTO
-    description: Optional[str] = None
+    description: str | None = None

@@ -1,19 +1,18 @@
-from uuid import UUID
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
+from fastapi import APIRouter, HTTPException, status
 
 from src.application.dtos.artifact import ArtifactDTO
 from src.application.exceptions import (
     ArtifactNotFoundError,
     FailedFetchArtifactMuseumAPIException,
-    FailedPublishArtifactMessageBrokerException,
     FailedPublishArtifactInCatalogException,
+    FailedPublishArtifactMessageBrokerException,
 )
-from src.application.use_cases.register_artifact import GetArtifactUseCase
-
+from src.application.use_cases.get_artifact import GetArtifactUseCase
 
 router = APIRouter(prefix="/v1/artifacts", tags=["Artifacts"])
 
@@ -41,20 +40,20 @@ async def get_artifact(
     except ArtifactNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Artifact not found in the system."
+            detail="Artifact not found in the system.",
         )
     except FailedFetchArtifactMuseumAPIException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to fetch artifact data from the museum API."
+            detail="Failed to fetch artifact data from the museum API.",
         )
     except FailedPublishArtifactInCatalogException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Artifact could not be published in the catalog."
+            detail="Artifact could not be published in the catalog.",
         )
     except FailedPublishArtifactMessageBrokerException:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to send notification via message broker."
+            detail="Failed to send notification via message broker.",
         )

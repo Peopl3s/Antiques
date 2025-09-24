@@ -1,12 +1,12 @@
 from dishka import Provider
 
 from src.config.ioc.providers import (
-    SettingsProvider,
+    BrokerProvider,
     DatabaseProvider,
     HTTPClientProvider,
-    BrokerProvider,
     RepositoryProvider,
     ServiceProvider,
+    SettingsProvider,
     UseCaseProvider,
 )
 

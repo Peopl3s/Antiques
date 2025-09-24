@@ -1,16 +1,18 @@
-from dishka import Provider, provide, Scope
+from dishka import Provider, Scope, provide
 from faststream.kafka import KafkaBroker
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.application.mappers import ArtifactMapper
+from src.application.use_cases.get_artifact import GetArtifactUseCase
+from src.config.base import Settings
 from src.infrastructures.broker.publisher import KafkaPublisher
 from src.infrastructures.db.repositories.artifact import ArtifactRepositorySQLAlchemy
 from src.infrastructures.db.session import get_session_factory
-
-from src.application.use_cases.register_artifact import GetArtifactUseCase
-from src.config.base import Settings
-from src.infrastructures.http.clients import ExternalMuseumAPIClient, PublicCatalogAPIClient
+from src.infrastructures.http.clients import (
+    ExternalMuseumAPIClient,
+    PublicCatalogAPIClient,
+)
 
 
 class SettingsProvider(Provider):
@@ -26,9 +28,11 @@ class DatabaseProvider(Provider):
         return get_session_factory(engine)
 
     @provide(scope=Scope.REQUEST)
-    async def get_session(self, factory: async_sessionmaker[AsyncSession]) -> AsyncSession:
+    async def get_session(
+        self, factory: async_sessionmaker[AsyncSession]
+    ) -> AsyncSession:
         async with factory() as session:
-            yield session # type: ignore
+            yield session  # type: ignore
 
 
 class HTTPClientProvider(Provider):
@@ -45,20 +49,30 @@ class BrokerProvider(Provider):
 
 class RepositoryProvider(Provider):
     @provide(scope=Scope.REQUEST)
-    def get_artifact_repository(self, session: AsyncSession) -> ArtifactRepositorySQLAlchemy:
+    def get_artifact_repository(
+        self, session: AsyncSession
+    ) -> ArtifactRepositorySQLAlchemy:
         return ArtifactRepositorySQLAlchemy(session=session)
 
 
 class ServiceProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_external_museum_api_client(
-        self, client: AsyncClient, settings: Settings
+        self,
+        client: AsyncClient,
+        settings: Settings,
     ) -> ExternalMuseumAPIClient:
-        return ExternalMuseumAPIClient(base_url=settings.EXTERNAL_API_BASE_URL, client=client)
+        return ExternalMuseumAPIClient(
+            base_url=settings.EXTERNAL_API_BASE_URL, client=client
+        )
 
     @provide(scope=Scope.REQUEST)
-    def get_public_catalog_api_client(self, client: AsyncClient, settings: Settings) -> PublicCatalogAPIClient:
-        return PublicCatalogAPIClient(base_url=settings.CATALOG_API_BASE_URL, client=client)
+    def get_public_catalog_api_client(
+        self, client: AsyncClient, settings: Settings
+    ) -> PublicCatalogAPIClient:
+        return PublicCatalogAPIClient(
+            base_url=settings.CATALOG_API_BASE_URL, client=client
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_message_broker(self, broker: KafkaBroker) -> KafkaPublisher:

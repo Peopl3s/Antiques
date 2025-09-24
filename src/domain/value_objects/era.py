@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import ClassVar, Set, final
+from typing import ClassVar, final
 
 from src.domain.exceptions import InvalidEraException
 
@@ -7,8 +7,14 @@ from src.domain.exceptions import InvalidEraException
 @final
 @dataclass(frozen=True, slots=True, kw_only=True, order=True)
 class Era:
-    _allowed_values: ClassVar[Set[str]] = {
-        "paleolithic", "neolithic", "bronze_age", "iron_age", "antiquity", "middle_ages", "modern"
+    _allowed_values: ClassVar[set[str]] = {
+        "paleolithic",
+        "neolithic",
+        "bronze_age",
+        "iron_age",
+        "antiquity",
+        "middle_ages",
+        "modern",
     }
     value: str
 
