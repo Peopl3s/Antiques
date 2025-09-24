@@ -1,3 +1,5 @@
+from dishka import Provider
+
 from src.config.ioc.providers import (
     SettingsProvider,
     DatabaseProvider,
@@ -9,7 +11,7 @@ from src.config.ioc.providers import (
 )
 
 
-def get_providers():
+def get_providers() -> list[Provider]:
     return [
         SettingsProvider(),
         DatabaseProvider(),

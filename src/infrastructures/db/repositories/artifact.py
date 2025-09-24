@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 
 from src.application.interfaces.repositories import ArtifactRepositoryProtocol
 from src.domain.entities.artifact import ArtifactEntity
-from src.infrastructures.db.exceptions import RepositoryError, RepositoryConflictError
+from src.infrastructures.db.exceptions import RepositorySaveError, RepositoryConflictError
 from src.infrastructures.db.models.artifact import ArtifactModel
 
 
@@ -26,7 +26,7 @@ class ArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
                 return None
             return artifact_model.to_dataclass()
         except SQLAlchemyError as e:
-            raise RepositoryError(f"Failed to retrieve artifact by inventory_id '{inventory_id}': {e}") from e
+            raise RepositorySaveError(f"Failed to retrieve artifact by inventory_id '{inventory_id}': {e}") from e
 
     async def save(self, artifact: ArtifactEntity) -> None:
         try:
@@ -51,7 +51,7 @@ class ArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
             raise RepositoryConflictError(f"Conflict while saving artifact '{artifact.inventory_id}': {e}") from e
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise RepositoryError(f"Failed to save artifact '{artifact.inventory_id}': {e}") from e
+            raise RepositorySaveError(f"Failed to save artifact '{artifact.inventory_id}': {e}") from e
         except Exception as e:
             await self.session.rollback()
-            raise RepositoryError(f"Unexpected error while saving artifact '{artifact.inventory_id}': {e}") from e
+            raise RepositorySaveError(f"Unexpected error while saving artifact '{artifact.inventory_id}': {e}") from e

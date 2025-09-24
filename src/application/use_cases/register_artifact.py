@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class RegisterArtifactUseCase:
+class GetArtifactUseCase:
     repository: ArtifactRepositoryProtocol
     museum_api_client: ExternalMuseumAPIProtocol
     catalog_api_client: PublicCatalogAPIProtocol

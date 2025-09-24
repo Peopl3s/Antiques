@@ -8,7 +8,7 @@ from src.infrastructures.broker.publisher import KafkaPublisher
 from src.infrastructures.db.repositories.artifact import ArtifactRepositorySQLAlchemy
 from src.infrastructures.db.session import get_session_factory
 
-from src.application.use_cases.register_artifact import RegisterArtifactUseCase
+from src.application.use_cases.register_artifact import GetArtifactUseCase
 from src.config.base import Settings
 from src.infrastructures.http.clients import ExternalMuseumAPIClient, PublicCatalogAPIClient
 
@@ -74,8 +74,8 @@ class UseCaseProvider(Provider):
         catalog_api_client: PublicCatalogAPIClient,
         message_broker: KafkaPublisher,
         artifact_mapper: ArtifactMapper,
-    ) -> RegisterArtifactUseCase:
-        return RegisterArtifactUseCase(
+    ) -> GetArtifactUseCase:
+        return GetArtifactUseCase(
             repository=repository,
             museum_api_client=museum_api_client,
             catalog_api_client=catalog_api_client,

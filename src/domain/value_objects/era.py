@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import ClassVar, Set, final
 
+from src.domain.exceptions import InvalidEraException
+
 
 @final
 @dataclass(frozen=True, slots=True, kw_only=True, order=True)
@@ -12,7 +14,7 @@ class Era:
 
     def __post_init__(self) -> None:
         if self.value not in self._allowed_values:
-            raise ValueError(f"Invalid era: {self.value}")
+            raise InvalidEraException(f"Invalid era: {self.value}")
 
     def __str__(self) -> str:
         return self.value

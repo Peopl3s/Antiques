@@ -1,27 +1,60 @@
 from uuid import UUID
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, status
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 
 from src.application.dtos.artifact import ArtifactDTO
-from src.application.use_cases.register_artifact import RegisterArtifactUseCase
-from src.presentation.api.rest.v1.exceptions import ArtifactNotFoundException
+from src.application.exceptions import (
+    ArtifactNotFoundError,
+    FailedFetchArtifactMuseumAPIException,
+    FailedPublishArtifactMessageBrokerException,
+    FailedPublishArtifactInCatalogException,
+)
+from src.application.use_cases.register_artifact import GetArtifactUseCase
+
 
 router = APIRouter(prefix="/v1/artifacts", tags=["Artifacts"])
 
 
-@router.get("/{inventory_id}", response_model=ArtifactDTO)
+@router.get(
+    "/{inventory_id}",
+    response_model=ArtifactDTO,
+    summary="Get artifact by inventory ID",
+    responses={
+        200: {"description": "Artifact retrieved successfully"},
+        400: {"description": "Bad request (e.g., invalid external API response)"},
+        404: {"description": "Artifact not found"},
+        500: {"description": "Internal server error"},
+        502: {"description": "Failed to notify via message broker"},
+    },
+)
 @inject
 async def get_artifact(
     inventory_id: str | UUID,
-    use_case: FromDishka[RegisterArtifactUseCase] = None,
-):
+    use_case: Annotated[GetArtifactUseCase, FromDishka()],
+) -> ArtifactDTO:
     try:
         artifact = await use_case.execute(inventory_id)
         return artifact
-    #TODO: Проработать исключения
-    except ArtifactNotFoundException:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Artifact not found")
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal error")
+    except ArtifactNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Artifact not found in the system."
+        )
+    except FailedFetchArtifactMuseumAPIException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to fetch artifact data from the museum API."
+        )
+    except FailedPublishArtifactInCatalogException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Artifact could not be published in the catalog."
+        )
+    except FailedPublishArtifactMessageBrokerException:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to send notification via message broker."
+        )
