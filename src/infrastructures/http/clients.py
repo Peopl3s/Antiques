@@ -33,12 +33,12 @@ class ExternalMuseumAPIClient(ExternalMuseumAPIProtocol):
             str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
         )
         url = f"{self.base_url}/artifacts/{inventory_id_str}"
-        logger.debug(f"Fetching artifact from URL: {url}")
+        logger.debug("Fetching artifact from URL: %s", url)
 
         try:
             response = await self.client.get(url)
             if response.status_code == 404:
-                logger.warning(f"Artifact {inventory_id_str} not found (404).")
+                logger.warning("Artifact %s not found (404).", inventory_id_str)
                 raise ArtifactNotFoundError(
                     f"Artifact {inventory_id_str} not found in external service"
                 )
@@ -55,18 +55,22 @@ class ExternalMuseumAPIClient(ExternalMuseumAPIProtocol):
                 acquisition_date=data["acquisition_date"],
                 department=data["department"],
             )
-            logger.debug(f"Successfully fetched artifact: {artifact}")
+            logger.debug("Successfully fetched artifact: %s", artifact)
             return artifact
 
         except (httpx.HTTPStatusError, httpx.RequestError) as e:
-            logger.error(f"HTTP error while fetching artifact {inventory_id_str}: {e}")
+            logger.exception(
+                "HTTP error while fetching artifact %s: %s", inventory_id_str, e
+            )
             raise
         except ValueError as e:
-            logger.error(f"Data validation error for artifact {inventory_id_str}: {e}")
+            logger.exception(
+                "Data validation error for artifact %s : %s", inventory_id_str, e
+            )
             raise
         except Exception as e:
-            logger.error(
-                f"Unexpected error while fetching artifact {inventory_id_str}: {e}"
+            logger.exception(
+                "Unexpected error while fetching artifact %s : %s", inventory_id_str, e
             )
             raise
 
@@ -101,15 +105,15 @@ class PublicCatalogAPIClient(PublicCatalogAPIProtocol):
             response.raise_for_status()
             data = response.json()
         except (httpx.HTTPStatusError, httpx.RequestError) as e:
-            logger.error("Error during HTTP request to %s: %s", url, e)
+            logger.exception("Error during HTTP request to %s: %s", url, e)
             raise
         except Exception as e:
-            logger.error("Unexpected error during publishing artifact: %s", e)
-            raise Exception(f"Failed to publish artifact to catalog: {e}") from e
+            logger.exception("Unexpected error during publishing artifact: %s", e)
+            raise Exception("Failed to publish artifact to catalog: %s", e) from e
 
         public_id = data.get("public_id", "")
         if not public_id:
-            logger.error("Response JSON missing 'public_id' field: %s", data)
+            logger.exception("Response JSON missing 'public_id' field: %s", data)
             raise ValueError("Invalid response data: missing 'public_id'")
 
         logger.debug("Successfully published artifact, public_id: %s", public_id)

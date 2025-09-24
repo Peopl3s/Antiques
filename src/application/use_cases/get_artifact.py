@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import logging
-from typing import Literal, cast
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 from src.application.dtos.artifact import (
@@ -23,7 +23,9 @@ from src.application.interfaces.http_clients import (
 from src.application.interfaces.mappers import DtoEntityMapperProtocol
 from src.application.interfaces.message_broker import MessageBrokerPublisherProtocol
 from src.application.interfaces.repositories import ArtifactRepositoryProtocol
-from src.domain.entities.artifact import ArtifactEntity
+
+if TYPE_CHECKING:
+    from src.domain.entities.artifact import ArtifactEntity
 
 logger = logging.getLogger(__name__)
 
@@ -55,16 +57,14 @@ class GetArtifactUseCase:
                 artifact_entity = self.artifact_mapper.to_entity(artifact_dto)
                 await self.repository.save(artifact_entity)
             except ArtifactNotFoundError as e:
-                logger.error(
+                logger.exception(
                     "Artifact not found in external museum API",
                     extra={"inventory_id": inventory_id, "error": str(e)},
-                    exc_info=True,
                 )
             except Exception as e:
-                logger.error(
+                logger.exception(
                     "Failed to fetch artifact from external museum API",
                     extra={"inventory_id": inventory_id, "error": str(e)},
-                    exc_info=True,
                 )
                 raise FailedFetchArtifactMuseumAPIException(
                     "Could not fetch artifact from external service",
@@ -87,7 +87,6 @@ class GetArtifactUseCase:
             logger.warning(
                 "Failed to publish message to broker (non-critical)",
                 extra={"inventory_id": artifact_entity.inventory_id, "error": str(e)},
-                exc_info=True,
             )
             raise FailedPublishArtifactMessageBrokerException(
                 "Failed to publish message to broker",
@@ -123,10 +122,9 @@ class GetArtifactUseCase:
                 },
             )
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to publish artifact to catalog",
                 extra={"inventory_id": artifact_entity.inventory_id, "error": str(e)},
-                exc_info=True,
             )
             raise FailedPublishArtifactInCatalogException(
                 "Could not publish artifact to catalog", str(e)

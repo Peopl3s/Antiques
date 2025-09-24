@@ -35,25 +35,24 @@ async def get_artifact(
     use_case: Annotated[GetArtifactUseCase, FromDishka()],
 ) -> ArtifactDTO:
     try:
-        artifact = await use_case.execute(inventory_id)
-        return artifact
-    except ArtifactNotFoundError:
+        return await use_case.execute(inventory_id)
+    except ArtifactNotFoundError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Artifact not found in the system.",
-        )
-    except FailedFetchArtifactMuseumAPIException:
+        ) from err
+    except FailedFetchArtifactMuseumAPIException as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to fetch artifact data from the museum API.",
-        )
-    except FailedPublishArtifactInCatalogException:
+        ) from err
+    except FailedPublishArtifactInCatalogException as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Artifact could not be published in the catalog.",
-        )
-    except FailedPublishArtifactMessageBrokerException:
+        ) from err
+    except FailedPublishArtifactMessageBrokerException as err:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Failed to send notification via message broker.",
-        )
+        ) from err

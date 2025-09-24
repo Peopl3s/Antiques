@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logger.info("Starting application...")
     yield
     logger.info("Shutting down application...")
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     server = Granian(
         target="main:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # noqa: S104
         port=8000,
         reload=True,
         log_level=LogLevels.info,

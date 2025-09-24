@@ -25,5 +25,5 @@ class KafkaPublisher(MessageBrokerPublisherProtocol):
                 topic=self.topic,
             )
         except Exception as e:
-            logging.error(f"Failed to publish artifact: {e}")
+            logging.error("Failed to publish artifact: %s", e)
             raise
