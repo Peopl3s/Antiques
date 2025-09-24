@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import logging
-from typing import TYPE_CHECKING, cast, Literal
+from typing import TYPE_CHECKING, Literal
 from uuid import UUID
 
 from src.application.dtos.artifact import (
@@ -39,106 +39,80 @@ class GetArtifactUseCase:
     artifact_mapper: DtoEntityMapperProtocol
 
     async def execute(self, inventory_id: str | UUID) -> ArtifactDTO:
-        inventory_id_str = (
-            str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
-        )
-        logger.info(
-            "Starting artifact registration", extra={"inventory_id": inventory_id_str}
-        )
+        inventory_id_str = str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
+        logger.info("Fetching artifact", extra={"inventory_id": inventory_id_str})
 
-        artifact_dto: ArtifactDTO | None = None
-        artifact_entity: (
-            ArtifactEntity | None
-        ) = await self.repository.get_by_inventory_id(str(inventory_id))
-        if not artifact_entity:
-            logger.info("Artifact not found locally, fetching from external service...")
-            try:
-                artifact_dto = await self.museum_api_client.fetch_artifact(inventory_id)
-                artifact_entity = self.artifact_mapper.to_entity(artifact_dto)
-                await self.repository.save(artifact_entity)
-            except ArtifactNotFoundError as e:
-                logger.exception(
-                    "Artifact not found in external museum API",
-                    extra={"inventory_id": inventory_id, "error": str(e)},
-                )
-            except Exception as e:
-                logger.exception(
-                    "Failed to fetch artifact from external museum API",
-                    extra={"inventory_id": inventory_id, "error": str(e)},
-                )
-                raise FailedFetchArtifactMuseumAPIException(
-                    "Could not fetch artifact from external service",
-                    str(e),
-                ) from e
+        artifact_entity: ArtifactEntity | None = await self.repository.get_by_inventory_id(inventory_id_str)
+        if artifact_entity:
+            logger.debug("Artifact found in local repository", extra={"inventory_id": inventory_id_str})
+            return self.artifact_mapper.to_dto(artifact_entity)
 
-        if artifact_entity is None:
-            logger.error(
-                "Artifact not found after external fetch",
-                extra={"inventory_id": inventory_id_str},
-            )
-            raise ArtifactNotFoundError("Artifact %s not found", inventory_id_str)
-
-        artifact_notify_dto = ArtifactAdmissionNotificationDTO(
-            inventory_id=artifact_entity.inventory_id,
-            name=artifact_entity.name,
-            acquisition_date=artifact_entity.acquisition_date,
-            department=artifact_entity.department,
-        )
+        logger.info("Artifact not found locally, fetching from external museum API...", extra={"inventory_id": inventory_id_str})
         try:
-            await self.message_broker.publish_new_artifact(artifact_notify_dto)
-            logger.info(
-                "Published new artifact event to message broker",
-                extra={"inventory_id": inventory_id_str},
+            artifact_dto: ArtifactDTO = await self.museum_api_client.fetch_artifact(inventory_id)
+        except ArtifactNotFoundError as e:
+            logger.error("Artifact not found in external museum API", extra={"inventory_id": inventory_id_str, "error": str(e)})
+            raise
+        except Exception as e:
+            logger.exception("Failed to fetch artifact from external museum API", extra={"inventory_id": inventory_id_str, "error": str(e)})
+            raise FailedFetchArtifactMuseumAPIException("Could not fetch artifact from external service", str(e)) from e
+
+        artifact_entity = self.artifact_mapper.to_entity(artifact_dto)
+        await self.repository.save(artifact_entity)
+        logger.info("Artifact saved to local repository", extra={"inventory_id": inventory_id_str})
+
+        try:
+            notification_dto = ArtifactAdmissionNotificationDTO(
+                inventory_id=artifact_entity.inventory_id,
+                name=artifact_entity.name,
+                acquisition_date=artifact_entity.acquisition_date,
+                department=artifact_entity.department,
             )
+            await self.message_broker.publish_new_artifact(notification_dto)
+            logger.info("Published new artifact event to message broker", extra={"inventory_id": inventory_id_str})
         except Exception as e:
             logger.warning(
-                "Failed to publish message to broker (non-critical)",
-                extra={"inventory_id": artifact_entity.inventory_id, "error": str(e)},
+                "Failed to publish artifact notification to message broker (non-critical)",
+                extra={"inventory_id": inventory_id_str, "error": str(e)},
             )
-            raise FailedPublishArtifactMessageBrokerException(
-                "Failed to publish message to broker",
-                str(e),
-            ) from e
+            raise FailedPublishArtifactMessageBrokerException("Failed to publish message to broker", str(e)) from e
 
-        publication_dto = ArtifactCatalogPublicationDTO(
-            inventory_id=artifact_entity.inventory_id,
-            name=artifact_entity.name,
-            era=EraDTO(
-                value=cast(
-                    "Literal['paleolithic', 'neolithic', 'bronze_age', 'iron_age', 'antiquity', 'middle_ages', 'modern']",
-                    artifact_entity.era.value,
-                ),
-            ),
-            material=MaterialDTO(
-                value=cast(
-                    "Literal['ceramic', 'metal', 'stone', 'glass', 'bone', 'wood', 'textile', 'other']",
-                    artifact_entity.material.value,
-                ),
-            ),
-            description=artifact_entity.description,
-        )
         try:
-            public_id: str = await self.catalog_api_client.publish_artifact(
-                publication_dto
+            publication_dto = ArtifactCatalogPublicationDTO(
+                inventory_id=artifact_entity.inventory_id,
+                name=artifact_entity.name,
+                era=EraDTO(value=self._validate_era(artifact_entity.era.value)),
+                material=MaterialDTO(value=self._validate_material(artifact_entity.material.value)),
+                description=artifact_entity.description,
             )
+            public_id: str = await self.catalog_api_client.publish_artifact(publication_dto)
             logger.info(
-                "Artifact published to catalog",
-                extra={
-                    "inventory_id": inventory_id,
-                    "public_id": public_id,
-                },
+                "Artifact published to public catalog",
+                extra={"inventory_id": inventory_id_str, "public_id": public_id},
             )
         except Exception as e:
-            logger.exception(
-                "Failed to publish artifact to catalog",
-                extra={"inventory_id": inventory_id, "error": str(e)},
-            )
-            raise FailedPublishArtifactInCatalogException(
-                "Could not publish artifact to catalog", str(e)
-            ) from e
+            logger.exception("Failed to publish artifact to catalog", extra={"inventory_id": inventory_id_str, "error": str(e)})
+            raise FailedPublishArtifactInCatalogException("Could not publish artifact to catalog", str(e)) from e
 
-        logger.info(
-            "Artifact registration completed",
-            extra={"inventory_id": inventory_id_str},
-        )
-        return artifact_dto or self.artifact_mapper.to_dto(artifact_entity)
+        logger.info("Artifact successfully fetched and processed", extra={"inventory_id": inventory_id_str})
+        return artifact_dto
+
+    def _validate_era(self, value: str) -> Literal[
+        "paleolithic", "neolithic", "bronze_age", "iron_age",
+        "antiquity", "middle_ages", "modern"
+    ]:
+        allowed = {
+            "paleolithic", "neolithic", "bronze_age", "iron_age",
+            "antiquity", "middle_ages", "modern"
+        }
+        if value not in allowed:
+            raise ValueError(f"Invalid era value: {value}")
+        return value  # type: ignore[return-value]
+
+    def _validate_material(self, value: str) -> Literal[
+        "ceramic", "metal", "stone", "glass", "bone", "wood", "textile", "other"
+    ]:
+        allowed = {"ceramic", "metal", "stone", "glass", "bone", "wood", "textile", "other"}
+        if value not in allowed:
+            raise ValueError(f"Invalid material value: {value}")
+        return value  # type: ignore[return-value]

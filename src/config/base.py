@@ -1,4 +1,4 @@
-from typing import Literal, final, cast
+from typing import Literal, cast, final
 
 from pydantic import Field, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     @computed_field
     def sqlalchemy_database_uri(self) -> PostgresDsn:
-        return cast(PostgresDsn, self.database_url)
+        return cast("PostgresDsn", self.database_url)
 
     class Config:
         env_file = ".env"
