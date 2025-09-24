@@ -1,4 +1,4 @@
-.PHONY: help install install-dev lint lint-fix format check test clean
+.PHONY: help install install-dev lint lint-fix format type-check check test clean
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -19,9 +19,13 @@ lint-fix: ## Run linting with ruff and fix auto-fixable issues
 format: ## Format code with ruff
 	uv run ruff format src/ tests/
 
-check: ## Run all checks (lint + format check)
+type-check: ## Run type checking with mypy
+	uv run mypy src/
+
+check: ## Run all checks (lint + format check + type check)
 	uv run ruff check src/ tests/
 	uv run ruff format --check src/ tests/
+	uv run mypy src/
 
 test: ## Run tests
 	uv run pytest tests/ -v
@@ -42,5 +46,5 @@ dev-setup: install-dev ## Set up development environment
 	@echo "Development environment set up successfully!"
 	@echo "Run 'make check' to verify everything is working."
 
-ci: check test ## Run CI pipeline (lint + test)
+ci: check test ## Run CI pipeline (lint + type check + test)
 	@echo "CI pipeline completed successfully!"

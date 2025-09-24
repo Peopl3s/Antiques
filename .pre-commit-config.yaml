@@ -27,3 +27,20 @@ repos:
         pass_filenames: false
       - id: ruff-format
         args: [ --config=pyproject.toml ]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [
+          types-requests,
+          types-redis,
+          types-setuptools,
+          fastapi,
+          pydantic,
+          sqlalchemy,
+          httpx,
+          dishka,
+        ]
+        args: [--config-file=pyproject.toml, src/]
+        pass_filenames: false

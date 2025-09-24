@@ -107,7 +107,7 @@ class PublicCatalogAPIClient(PublicCatalogAPIProtocol):
             logger.error("Unexpected error during publishing artifact: %s", e)
             raise Exception(f"Failed to publish artifact to catalog: {e}") from e
 
-        public_id = data.get("public_id")
+        public_id = data.get("public_id", "")
         if not public_id:
             logger.error("Response JSON missing 'public_id' field: %s", data)
             raise ValueError("Invalid response data: missing 'public_id'")
