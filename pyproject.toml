@@ -144,6 +144,13 @@ ignore = [
     "F401",
     # Conflict with formatter
     "COM812",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D106",
+    "D100",
+    "N818",
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
