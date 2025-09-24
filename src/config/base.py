@@ -1,4 +1,4 @@
-from typing import Literal, final
+from typing import Literal, final, cast
 
 from pydantic import Field, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings
@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     publish_retry_backoff: float = Field(0.5, alias="PUBLISH_RETRY_BACKOFF")
 
     @computed_field
-    @property
     def database_url(self) -> PostgresDsn:
         return PostgresDsn.build(
             scheme="postgresql+psycopg",
@@ -48,9 +47,8 @@ class Settings(BaseSettings):
         )
 
     @computed_field
-    @property
     def sqlalchemy_database_uri(self) -> PostgresDsn:
-        return self.database_url
+        return cast(PostgresDsn, self.database_url)
 
     class Config:
         env_file = ".env"

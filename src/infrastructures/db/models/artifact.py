@@ -20,6 +20,27 @@ class ArtifactModel:
         Index("ix_artifacts_department", "department"),
     )
 
+    def __init__(
+            self,
+            *,
+            inventory_id: UUID,
+            created_at: datetime,
+            acquisition_date: datetime,
+            name: str,
+            department: str,
+            era: str,
+            material: str,
+            description: str | None = None,
+    ) -> None:
+        self.inventory_id = inventory_id
+        self.created_at = created_at
+        self.acquisition_date = acquisition_date
+        self.name = name
+        self.department = department
+        self.era = era
+        self.material = material
+        self.description = description
+
     inventory_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,

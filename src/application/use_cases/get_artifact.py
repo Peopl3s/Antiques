@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Literal
 from uuid import UUID
 
 from src.application.dtos.artifact import (
@@ -71,6 +71,13 @@ class GetArtifactUseCase:
                     str(e),
                 ) from e
 
+        if artifact_entity is None:
+            logger.error(
+                "Artifact not found after external fetch",
+                extra={"inventory_id": inventory_id_str},
+            )
+            raise ArtifactNotFoundError("Artifact %s not found", inventory_id_str)
+
         artifact_notify_dto = ArtifactAdmissionNotificationDTO(
             inventory_id=artifact_entity.inventory_id,
             name=artifact_entity.name,
@@ -117,14 +124,14 @@ class GetArtifactUseCase:
             logger.info(
                 "Artifact published to catalog",
                 extra={
-                    "inventory_id": artifact_entity.inventory_id,
+                    "inventory_id": inventory_id,
                     "public_id": public_id,
                 },
             )
         except Exception as e:
             logger.exception(
                 "Failed to publish artifact to catalog",
-                extra={"inventory_id": artifact_entity.inventory_id, "error": str(e)},
+                extra={"inventory_id": inventory_id, "error": str(e)},
             )
             raise FailedPublishArtifactInCatalogException(
                 "Could not publish artifact to catalog", str(e)

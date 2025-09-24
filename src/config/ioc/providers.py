@@ -1,3 +1,5 @@
+from typing import AsyncIterator
+
 from dishka import Provider, Scope, provide
 from faststream.kafka import KafkaBroker
 from httpx import AsyncClient
@@ -30,9 +32,9 @@ class DatabaseProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def get_session(
         self, factory: async_sessionmaker[AsyncSession]
-    ) -> AsyncSession:
+    ) -> AsyncIterator[AsyncSession]:
         async with factory() as session:
-            yield session  # type: ignore
+            yield session
 
 
 class HTTPClientProvider(Provider):

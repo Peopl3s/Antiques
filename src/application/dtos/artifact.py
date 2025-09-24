@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Literal, Self, final
+from typing import Literal, final
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -83,7 +83,7 @@ class ArtifactDTO(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_dates(self) -> Self:
+    def validate_dates(self) -> "ArtifactDTO":
         if self.acquisition_date > self.created_at:
             raise ValueError("Acquisition date cannot be later than created_at")
         return self
