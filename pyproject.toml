@@ -102,7 +102,7 @@ exclude = [
 # Enable comprehensive linting rules
 select = [
     "E4",      # pycodestyle errors
-    "E7",      # pycodestyle errors  
+    "E7",      # pycodestyle errors
     "E9",      # pycodestyle errors
     "F",       # pyflakes
     "W",       # pycodestyle warnings
@@ -167,6 +167,8 @@ ignore = [
     "D100",
     "N818",
     "D105",
+    "INP001",
+    "D415",
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
