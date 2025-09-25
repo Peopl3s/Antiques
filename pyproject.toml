@@ -5,8 +5,20 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.16.5",
+    "dishka>=1.7.2",
+    "fastapi>=0.117.1",
+    "faststream>=0.5.48",
+    "granian>=2.5.4",
+    "httpx>=0.28.1",
+    "asyncpg>=0.29.0",
+    "greenlet>=3.0.0",
     "pydantic>=2.11.9",
+    "pydantic-settings>=2.11.0",
+    "pytest>=8.4.2",
     "sqlalchemy>=2.0.43",
+    "stamina>=25.1.0",
+    "watchfiles>=1.1.0",
 ]
 
 [project.optional-dependencies]
