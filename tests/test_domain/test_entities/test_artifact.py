@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -15,8 +15,8 @@ class TestArtifactEntity:
     def test_create_artifact_entity_success(self):
         """Test successful creation of ArtifactEntity"""
         inventory_id = uuid4()
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         artifact = ArtifactEntity(
             inventory_id=inventory_id,
             acquisition_date=acquisition_date,
@@ -39,8 +39,8 @@ class TestArtifactEntity:
     def test_create_artifact_entity_without_description(self):
         """Test creation of ArtifactEntity without description"""
         inventory_id = uuid4()
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         artifact = ArtifactEntity(
             inventory_id=inventory_id,
             acquisition_date=acquisition_date,
@@ -55,8 +55,8 @@ class TestArtifactEntity:
     def test_artifact_entity_immutability(self):
         """Test that ArtifactEntity is immutable"""
         inventory_id = uuid4()
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         artifact = ArtifactEntity(
             inventory_id=inventory_id,
             acquisition_date=acquisition_date,
@@ -72,9 +72,9 @@ class TestArtifactEntity:
     def test_artifact_entity_equality(self):
         """Test equality comparison between ArtifactEntity instances"""
         inventory_id = uuid4()
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        created_at = datetime(2023, 1, 2, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+        created_at = datetime(2023, 1, 2, tzinfo=UTC)
+
         artifact1 = ArtifactEntity(
             inventory_id=inventory_id,
             created_at=created_at,
@@ -99,8 +99,8 @@ class TestArtifactEntity:
 
     def test_artifact_entity_inequality(self):
         """Test inequality comparison between ArtifactEntity instances"""
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         artifact1 = ArtifactEntity(
             inventory_id=uuid4(),
             acquisition_date=acquisition_date,
@@ -124,8 +124,8 @@ class TestArtifactEntity:
     def test_artifact_entity_hash(self):
         """Test that ArtifactEntity can be hashed"""
         inventory_id = uuid4()
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         artifact = ArtifactEntity(
             inventory_id=inventory_id,
             acquisition_date=acquisition_date,
@@ -140,8 +140,8 @@ class TestArtifactEntity:
     def test_artifact_entity_string_representation(self):
         """Test string representation of ArtifactEntity"""
         inventory_id = uuid4()
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         artifact = ArtifactEntity(
             inventory_id=inventory_id,
             acquisition_date=acquisition_date,
@@ -157,10 +157,15 @@ class TestArtifactEntity:
 
     def test_artifact_entity_with_all_eras(self):
         """Test ArtifactEntity creation with all valid era values"""
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
         valid_eras = [
-            "paleolithic", "neolithic", "bronze_age", "iron_age",
-            "antiquity", "middle_ages", "modern"
+            "paleolithic",
+            "neolithic",
+            "bronze_age",
+            "iron_age",
+            "antiquity",
+            "middle_ages",
+            "modern",
         ]
 
         for era_value in valid_eras:
@@ -176,9 +181,16 @@ class TestArtifactEntity:
 
     def test_artifact_entity_with_all_materials(self):
         """Test ArtifactEntity creation with all valid material values"""
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
         valid_materials = [
-            "ceramic", "metal", "stone", "glass", "bone", "wood", "textile", "other"
+            "ceramic",
+            "metal",
+            "stone",
+            "glass",
+            "bone",
+            "wood",
+            "textile",
+            "other",
         ]
 
         for material_value in valid_materials:
@@ -194,17 +206,17 @@ class TestArtifactEntity:
 
     def test_artifact_entity_created_at_default(self):
         """Test that created_at is set to current time by default"""
-        before_creation = datetime.now(timezone.utc)
-        
+        before_creation = datetime.now(UTC)
+
         artifact = ArtifactEntity(
             inventory_id=uuid4(),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era=Era(value="antiquity"),
             material=Material(value="ceramic"),
         )
-        
-        after_creation = datetime.now(timezone.utc)
-        
+
+        after_creation = datetime.now(UTC)
+
         assert before_creation <= artifact.created_at <= after_creation

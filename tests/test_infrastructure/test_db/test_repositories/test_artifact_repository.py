@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -9,8 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.artifact import ArtifactEntity
 from src.domain.value_objects.era import Era
 from src.domain.value_objects.material import Material
-from tests.test_infrastructure.test_db.models.test_artifact_model import TestArtifactModel
-from tests.test_infrastructure.test_db.repositories.test_artifact_repository_impl import TestArtifactRepositorySQLAlchemy
+from tests.test_infrastructure.test_db.models.test_artifact_model import (
+    TestArtifactModel,
+)
+from tests.test_infrastructure.test_db.repositories.test_artifact_repository_impl import (
+    TestArtifactRepositorySQLAlchemy,
+)
 
 
 class TestArtifactRepository:
@@ -23,7 +27,7 @@ class TestArtifactRepository:
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era=Era(value="antiquity"),
@@ -37,10 +41,12 @@ class TestArtifactRepository:
         # Assert
         # Verify that the artifact was saved by querying the database
         result = await test_session.execute(
-            text(f"SELECT * FROM artifacts WHERE inventory_id = '{artifact_entity.inventory_id}'")
+            text(
+                f"SELECT * FROM artifacts WHERE inventory_id = '{artifact_entity.inventory_id}'"
+            )
         )
         db_artifact = result.fetchone()
-        
+
         assert db_artifact is not None
         assert db_artifact.inventory_id == str(artifact_entity.inventory_id)
         assert db_artifact.name == artifact_entity.name
@@ -55,12 +61,12 @@ class TestArtifactRepository:
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
-        
+
         # Create and save an artifact
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
-            created_at=datetime.now(timezone.utc),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime.now(UTC),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era="antiquity",
@@ -96,17 +102,19 @@ class TestArtifactRepository:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_by_inventory_id_with_uuid_object(self, test_session: AsyncSession):
+    async def test_get_by_inventory_id_with_uuid_object(
+        self, test_session: AsyncSession
+    ):
         """Test artifact retrieval with UUID object"""
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
-        
+
         # Create and save an artifact
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
-            created_at=datetime.now(timezone.utc),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime.now(UTC),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era="antiquity",
@@ -124,13 +132,15 @@ class TestArtifactRepository:
         assert result.inventory_id == inventory_id
 
     @pytest.mark.asyncio
-    async def test_save_artifact_with_null_description(self, test_session: AsyncSession):
+    async def test_save_artifact_with_null_description(
+        self, test_session: AsyncSession
+    ):
         """Test saving artifact with null description"""
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era=Era(value="antiquity"),
@@ -143,10 +153,12 @@ class TestArtifactRepository:
 
         # Assert
         result = await test_session.execute(
-            text(f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact_entity.inventory_id)}'")
+            text(
+                f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact_entity.inventory_id)}'"
+            )
         )
         db_artifact = result.fetchone()
-        
+
         assert db_artifact is not None
         assert db_artifact.description is None
 
@@ -158,7 +170,7 @@ class TestArtifactRepository:
         artifacts = [
             ArtifactEntity(
                 inventory_id=uuid4(),
-                acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+                acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
                 name=f"Artifact {i}",
                 department="Archaeology",
                 era=Era(value="antiquity"),
@@ -175,7 +187,9 @@ class TestArtifactRepository:
         # Assert
         for artifact in artifacts:
             result = await test_session.execute(
-                text(f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact.inventory_id)}'")
+                text(
+                    f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact.inventory_id)}'"
+                )
             )
             db_artifact = result.fetchone()
             assert db_artifact is not None
@@ -188,7 +202,7 @@ class TestArtifactRepository:
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Test Artifact",
             department="Test Department",
             era=Era(value="antiquity"),
@@ -201,7 +215,7 @@ class TestArtifactRepository:
         # Assert
         # The session should still be active and usable
         assert not test_session.in_transaction()
-        
+
         # Verify we can query the saved artifact
         result = await repository.get_by_inventory_id(str(artifact_entity.inventory_id))
         assert result is not None
@@ -212,9 +226,9 @@ class TestArtifactRepository:
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
-        created_at = datetime.now(timezone.utc)
-        acquisition_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-        
+        created_at = datetime.now(UTC)
+        acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
+
         # Create database model directly
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
@@ -250,12 +264,12 @@ class TestArtifactRepository:
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
-        
+
         # Create artifact with invalid era (this shouldn't happen in normal operation)
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
-            created_at=datetime.now(timezone.utc),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime.now(UTC),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era="invalid_era",  # This should cause issues
@@ -270,17 +284,19 @@ class TestArtifactRepository:
             await repository.get_by_inventory_id(str(inventory_id))
 
     @pytest.mark.asyncio
-    async def test_repository_with_invalid_material_value(self, test_session: AsyncSession):
+    async def test_repository_with_invalid_material_value(
+        self, test_session: AsyncSession
+    ):
         """Test repository behavior with invalid material value in database"""
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
-        
+
         # Create artifact with invalid material
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
-            created_at=datetime.now(timezone.utc),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime.now(UTC),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name="Ancient Vase",
             department="Archaeology",
             era="antiquity",
@@ -299,8 +315,8 @@ class TestArtifactRepository:
         """Test that datetime fields are properly handled"""
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
-        acquisition_date = datetime(2023, 1, 1, 12, 30, 45, tzinfo=timezone.utc)
-        
+        acquisition_date = datetime(2023, 1, 1, 12, 30, 45, tzinfo=UTC)
+
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
             acquisition_date=acquisition_date,
@@ -315,17 +331,21 @@ class TestArtifactRepository:
 
         # Assert
         result = await test_session.execute(
-            text(f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact_entity.inventory_id)}'")
+            text(
+                f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact_entity.inventory_id)}'"
+            )
         )
         db_artifact = result.fetchone()
-        
+
         assert db_artifact is not None
         # The datetime should be preserved (accounting for potential timezone conversion)
         # SQLite may return datetime as string, so we need to handle both cases
         if isinstance(db_artifact.acquisition_date, str):
-            parsed_datetime = datetime.fromisoformat(db_artifact.acquisition_date.replace(' ', 'T'))
+            parsed_datetime = datetime.fromisoformat(
+                db_artifact.acquisition_date.replace(" ", "T")
+            )
             # Add timezone info to match the expected datetime
-            parsed_datetime = parsed_datetime.replace(tzinfo=timezone.utc)
+            parsed_datetime = parsed_datetime.replace(tzinfo=UTC)
             assert parsed_datetime == acquisition_date
         else:
             assert db_artifact.acquisition_date == acquisition_date
@@ -335,12 +355,12 @@ class TestArtifactRepository:
         """Test repository error handling"""
         # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
-        
+
         # Create an artifact with invalid data that should cause database errors
         # Use None for a required field (this should violate NOT NULL constraint)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
-            acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
             name=None,  # This should violate NOT NULL constraint
             department="Archaeology",
             era=Era(value="antiquity"),

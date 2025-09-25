@@ -1,14 +1,14 @@
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
-import pytest
 from dishka import AsyncContainer, make_async_container
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+import pytest
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.application.dtos.artifact import (
     ArtifactAdmissionNotificationDTO,
@@ -30,7 +30,10 @@ from src.domain.entities.artifact import ArtifactEntity
 from src.domain.value_objects.era import Era
 from src.domain.value_objects.material import Material
 from src.main import create_app
-from tests.test_infrastructure.test_db.models.test_artifact_model import test_mapper_registry, TestArtifactModel
+from tests.test_infrastructure.test_db.models.test_artifact_model import (
+    TestArtifactModel,
+    test_mapper_registry,
+)
 
 
 @pytest.fixture(scope="session")
@@ -42,9 +45,9 @@ def anyio_backend() -> str:
 async def test_engine() -> AsyncGenerator[Any, None]:
     # Use SQLite for testing (simpler setup)
     engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:", 
+        "sqlite+aiosqlite:///:memory:",
         echo=False,
-        connect_args={"check_same_thread": False}
+        connect_args={"check_same_thread": False},
     )
     yield engine
     await engine.dispose()
@@ -55,8 +58,10 @@ async def test_session(test_engine: Any) -> AsyncGenerator[AsyncSession, None]:
     # Create the artifacts table using SQLAlchemy metadata
     async with test_engine.begin() as conn:
         await conn.run_sync(test_mapper_registry.metadata.create_all)
-    
-    async_session = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+
+    async_session = async_sessionmaker(
+        test_engine, class_=AsyncSession, expire_on_commit=False
+    )
     async with async_session() as session:
         yield session
         # Clean up the session
@@ -78,8 +83,8 @@ def client() -> TestClient:
 def sample_artifact_dto() -> ArtifactDTO:
     return ArtifactDTO(
         inventory_id=uuid4(),
-        created_at=datetime.now(timezone.utc),
-        acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+        created_at=datetime.now(UTC),
+        acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
         name="Ancient Vase",
         department="Archaeology",
         era=EraDTO(value="antiquity"),
@@ -92,7 +97,7 @@ def sample_artifact_dto() -> ArtifactDTO:
 def sample_artifact_entity() -> ArtifactEntity:
     return ArtifactEntity(
         inventory_id=uuid4(),
-        acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+        acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
         name="Ancient Vase",
         department="Archaeology",
         era=Era(value="antiquity"),
@@ -153,7 +158,7 @@ def sample_notification_dto() -> ArtifactAdmissionNotificationDTO:
     return ArtifactAdmissionNotificationDTO(
         inventory_id=uuid4(),
         name="Ancient Vase",
-        acquisition_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
+        acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
         department="Archaeology",
     )
 

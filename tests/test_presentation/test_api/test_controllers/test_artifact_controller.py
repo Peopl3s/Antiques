@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-import pytest
 from fastapi import HTTPException, status
+import pytest
 
 from src.application.dtos.artifact import ArtifactDTO, EraDTO, MaterialDTO
 from src.application.exceptions import (
@@ -17,11 +17,15 @@ from src.application.use_cases.get_artifact import GetArtifactUseCase
 class TestArtifactController:
     """Test cases for ArtifactController"""
 
-    async def _call_controller_with_mock(self, inventory_id: str, mock_use_case: GetArtifactUseCase):
+    async def _call_controller_with_mock(
+        self, inventory_id: str, mock_use_case: GetArtifactUseCase
+    ):
         """Helper method to call the controller function with a mock use case"""
         # Import the controller function here to avoid circular imports
-        from src.presentation.api.rest.v1.controllers.artifact_controller import get_artifact
-        
+        from src.presentation.api.rest.v1.controllers.artifact_controller import (
+            get_artifact,
+        )
+
         # Call the controller function directly, bypassing dependency injection
         # This is a simplified approach for testing
         try:
@@ -100,14 +104,19 @@ class TestArtifactController:
 
         # Create a mock use case that raises FailedFetchArtifactMuseumAPIException
         mock_use_case = AsyncMock()
-        mock_use_case.execute.side_effect = FailedFetchArtifactMuseumAPIException("API Error", "Details")
+        mock_use_case.execute.side_effect = FailedFetchArtifactMuseumAPIException(
+            "API Error", "Details"
+        )
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
             await self._call_controller_with_mock(inventory_id, mock_use_case)
 
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-        assert exc_info.value.detail == "Failed to fetch artifact data from the museum API."
+        assert (
+            exc_info.value.detail
+            == "Failed to fetch artifact data from the museum API."
+        )
         mock_use_case.execute.assert_called_once_with(inventory_id)
 
     @pytest.mark.asyncio
@@ -118,14 +127,18 @@ class TestArtifactController:
 
         # Create a mock use case that raises FailedPublishArtifactInCatalogException
         mock_use_case = AsyncMock()
-        mock_use_case.execute.side_effect = FailedPublishArtifactInCatalogException("Catalog Error", "Details")
+        mock_use_case.execute.side_effect = FailedPublishArtifactInCatalogException(
+            "Catalog Error", "Details"
+        )
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
             await self._call_controller_with_mock(inventory_id, mock_use_case)
 
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-        assert exc_info.value.detail == "Artifact could not be published in the catalog."
+        assert (
+            exc_info.value.detail == "Artifact could not be published in the catalog."
+        )
         mock_use_case.execute.assert_called_once_with(inventory_id)
 
     @pytest.mark.asyncio
@@ -136,14 +149,18 @@ class TestArtifactController:
 
         # Create a mock use case that raises FailedPublishArtifactMessageBrokerException
         mock_use_case = AsyncMock()
-        mock_use_case.execute.side_effect = FailedPublishArtifactMessageBrokerException("Broker Error", "Details")
+        mock_use_case.execute.side_effect = FailedPublishArtifactMessageBrokerException(
+            "Broker Error", "Details"
+        )
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
             await self._call_controller_with_mock(inventory_id, mock_use_case)
 
         assert exc_info.value.status_code == status.HTTP_502_BAD_GATEWAY
-        assert exc_info.value.detail == "Failed to send notification via message broker."
+        assert (
+            exc_info.value.detail == "Failed to send notification via message broker."
+        )
         mock_use_case.execute.assert_called_once_with(inventory_id)
 
     @pytest.mark.asyncio

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     catalog_api_base: str = Field(
         "https://catalog.antiquarium-museum.ru", alias="CATALOG_API_BASE"
     )
-    
+
     # Aliases for compatibility
     external_api_base_url: str = Field(
         "https://api.antiquarium-museum.ru", alias="EXTERNAL_API_BASE_URL"

@@ -10,8 +10,13 @@ class TestEra:
     def test_create_era_success(self):
         """Test successful creation of Era with valid values"""
         valid_eras = [
-            "paleolithic", "neolithic", "bronze_age", "iron_age",
-            "antiquity", "middle_ages", "modern"
+            "paleolithic",
+            "neolithic",
+            "bronze_age",
+            "iron_age",
+            "antiquity",
+            "middle_ages",
+            "modern",
         ]
 
         for era_value in valid_eras:
@@ -20,9 +25,7 @@ class TestEra:
 
     def test_create_era_invalid_value(self):
         """Test creation of Era with invalid value raises exception"""
-        invalid_eras = [
-            "invalid_era", "prehistoric", "future", "", " ", "Victorian"
-        ]
+        invalid_eras = ["invalid_era", "prehistoric", "future", "", " ", "Victorian"]
 
         for era_value in invalid_eras:
             with pytest.raises(InvalidEraException, match="Invalid era"):
@@ -36,7 +39,7 @@ class TestEra:
     def test_era_immutability(self):
         """Test that Era is immutable"""
         era = Era(value="antiquity")
-        
+
         with pytest.raises(AttributeError):
             era.value = "modern"
 
@@ -62,7 +65,7 @@ class TestEra:
         # Note: Era is marked with order=True, so it should support ordering
         era1 = Era(value="antiquity")
         era2 = Era(value="modern")
-        
+
         # Since Era uses string comparison, we can test basic ordering
         assert era1 != era2
         # The actual ordering depends on the string values
@@ -77,7 +80,7 @@ class TestEra:
         era1 = Era(value="antiquity")
         era2 = Era(value="antiquity")
         era3 = Era(value="modern")
-        
+
         era_set = {era1, era2, era3}
         assert len(era_set) == 2  # era1 and era2 are the same
 
@@ -85,7 +88,7 @@ class TestEra:
         """Test that Era can be used as a dictionary key"""
         era1 = Era(value="antiquity")
         era2 = Era(value="modern")
-        
+
         era_dict = {era1: "ancient", era2: "recent"}
         assert era_dict[era1] == "ancient"
         assert era_dict[era2] == "recent"
@@ -100,8 +103,13 @@ class TestEra:
     def test_era_allowed_values_constant(self):
         """Test that _allowed_values contains all expected values"""
         expected_values = {
-            "paleolithic", "neolithic", "bronze_age", "iron_age",
-            "antiquity", "middle_ages", "modern"
+            "paleolithic",
+            "neolithic",
+            "bronze_age",
+            "iron_age",
+            "antiquity",
+            "middle_ages",
+            "modern",
         }
         assert Era._allowed_values == expected_values
 
@@ -114,7 +122,7 @@ class TestEra:
     def test_era_frozen(self):
         """Test that Era is frozen (immutable)"""
         era = Era(value="antiquity")
-        
+
         # Try to modify the value (should fail)
         with pytest.raises(AttributeError):
             era.value = "modern"
@@ -122,11 +130,11 @@ class TestEra:
     def test_era_slots(self):
         """Test that Era uses slots for memory efficiency"""
         era = Era(value="antiquity")
-        
+
         # Check that __slots__ is defined
-        assert hasattr(Era, '__slots__')
-        assert 'value' in Era.__slots__
-        
+        assert hasattr(Era, "__slots__")
+        assert "value" in Era.__slots__
+
         # Check that we can't add new attributes (frozen dataclass with slots prevents this)
         with pytest.raises((AttributeError, TypeError)):
             era.new_attribute = "test"
@@ -140,25 +148,27 @@ class TestEra:
     def test_era_dataclass_properties(self):
         """Test that Era behaves as a proper dataclass"""
         era = Era(value="antiquity")
-        
+
         # Check dataclass properties
-        assert hasattr(era, '__dataclass_fields__')
-        assert 'value' in era.__dataclass_fields__
-        
+        assert hasattr(era, "__dataclass_fields__")
+        assert "value" in era.__dataclass_fields__
+
         # Check that it's frozen
         assert era.__dataclass_params__.frozen
 
     def test_era_final(self):
         """Test that Era is marked as final (cannot be subclassed)"""
         # Check that the class has the __final__ attribute set by @final decorator
-        assert hasattr(Era, '__final__') or getattr(Era, '__final__', False)
-        
+        assert hasattr(Era, "__final__") or getattr(Era, "__final__", False)
+
         # In some Python versions, @final may not prevent subclassing at runtime
         # but it should provide a hint to type checkers and static analysis tools
         # Let's check if we can detect the final marker
         try:
+
             class SubEra(Era):
                 pass
+
             # If subclassing succeeds, we should at least verify that the final decorator was present
             # This is a runtime limitation in some Python versions
         except TypeError:

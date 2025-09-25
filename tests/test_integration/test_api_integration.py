@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from src.application.dtos.artifact import ArtifactDTO, EraDTO, MaterialDTO
 from src.domain.entities.artifact import ArtifactEntity
@@ -18,7 +18,7 @@ class TestApiIntegration:
         """Test successful artifact retrieval through API endpoint"""
         # Arrange
         inventory_id = str(uuid4())
-        
+
         # Act & Assert
         # Since the database tables don't exist in the test environment,
         # we expect an internal server error due to the database connection issue
@@ -55,7 +55,7 @@ class TestApiIntegration:
         # Assert
         assert response.status_code == 200
         assert "application/json" in response.headers["content-type"]
-        
+
         openapi_spec = response.json()
         assert "openapi" in openapi_spec
         assert "info" in openapi_spec
@@ -113,6 +113,7 @@ class TestApiIntegration:
         """Test API response time for documentation endpoints"""
         # Act
         import time
+
         start_time = time.time()
         response = client.get("/api/docs")
         end_time = time.time()
@@ -126,7 +127,9 @@ class TestApiIntegration:
     async def test_api_content_type_negotiation(self, client: TestClient):
         """Test API content type negotiation"""
         # Act
-        response = client.get("/api/openapi.json", headers={"Accept": "application/json"})
+        response = client.get(
+            "/api/openapi.json", headers={"Accept": "application/json"}
+        )
 
         # Assert
         assert response.status_code == 200
@@ -165,21 +168,21 @@ class TestApiIntegration:
         """Test OpenAPI schema validation"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         # Validate required OpenAPI fields
         required_fields = ["openapi", "info", "paths"]
         for field in required_fields:
             assert field in openapi_spec
-        
+
         # Validate info section
         info = openapi_spec["info"]
         assert "title" in info
         assert "version" in info
-        
+
         # Validate paths section
         paths = openapi_spec["paths"]
         assert isinstance(paths, dict)
@@ -189,15 +192,15 @@ class TestApiIntegration:
         """Test that artifact path is defined in OpenAPI spec"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         # Check if the artifact path exists
         paths = openapi_spec["paths"]
         artifact_paths = [path for path in paths.keys() if "artifacts" in path]
-        
+
         # Should have at least one artifact-related path
         assert len(artifact_paths) > 0
 
@@ -206,11 +209,11 @@ class TestApiIntegration:
         """Test API response structure for OpenAPI spec"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         # Check structure
         assert isinstance(openapi_spec, dict)
         assert isinstance(openapi_spec.get("info", {}), dict)
@@ -222,11 +225,11 @@ class TestApiIntegration:
         """Test API version consistency"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         # Check version format
         openapi_version = openapi_spec.get("openapi", "")
         assert openapi_version.startswith("3.")  # Should be OpenAPI 3.x
@@ -236,18 +239,18 @@ class TestApiIntegration:
         """Test API info metadata"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         info = openapi_spec.get("info", {})
-        
+
         # Check required info fields
         assert "title" in info
         assert "version" in info
         assert "description" in info
-        
+
         # Check that title matches our application
         assert "Антиквариум" in info["title"] or "Antiques" in info["title"]
 
@@ -256,14 +259,17 @@ class TestApiIntegration:
         """Test API security definitions in OpenAPI spec"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         # Security definitions may or may not be present
         # If present, they should be properly structured
-        if "components" in openapi_spec and "securitySchemes" in openapi_spec["components"]:
+        if (
+            "components" in openapi_spec
+            and "securitySchemes" in openapi_spec["components"]
+        ):
             security_schemes = openapi_spec["components"]["securitySchemes"]
             assert isinstance(security_schemes, dict)
 
@@ -272,15 +278,15 @@ class TestApiIntegration:
         """Test API servers definition in OpenAPI spec"""
         # Act
         response = client.get("/api/openapi.json")
-        
+
         # Assert
         assert response.status_code == 200
         openapi_spec = response.json()
-        
+
         # Servers definition is optional
         if "servers" in openapi_spec:
             servers = openapi_spec["servers"]
             assert isinstance(servers, list)
-            
+
             for server in servers:
                 assert "url" in server

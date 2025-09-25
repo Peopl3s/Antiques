@@ -12,13 +12,16 @@ from src.infrastructures.db.exceptions import (
     RepositoryConflictError,
     RepositorySaveError,
 )
-from tests.test_infrastructure.test_db.models.test_artifact_model import TestArtifactModel
+from tests.test_infrastructure.test_db.models.test_artifact_model import (
+    TestArtifactModel,
+)
 
 
 @final
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TestArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
     """SQLite-compatible repository for testing"""
+
     session: AsyncSession
 
     async def get_by_inventory_id(
@@ -26,8 +29,10 @@ class TestArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
     ) -> ArtifactEntity | None:
         try:
             # Convert UUID to string for SQLite compatibility
-            inventory_id_str = str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
-            
+            inventory_id_str = (
+                str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
+            )
+
             stmt = select(TestArtifactModel).where(
                 TestArtifactModel.inventory_id == inventory_id_str
             )
@@ -45,7 +50,7 @@ class TestArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
         try:
             # Convert UUID to string for SQLite compatibility
             inventory_id_str = str(artifact.inventory_id)
-            
+
             stmt = select(TestArtifactModel).where(
                 TestArtifactModel.inventory_id == inventory_id_str
             )

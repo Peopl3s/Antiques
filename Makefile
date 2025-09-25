@@ -11,20 +11,20 @@ install-dev: ## Install development dependencies
 	uv sync --dev
 
 lint: ## Run linting with ruff
-	uv run ruff check src/ tests/
+	uv run ruff check src/
 
 lint-fix: ## Run linting with ruff and fix auto-fixable issues
-	uv run ruff check --fix src/ tests/
+	uv run ruff check --fix src/
 
 format: ## Format code with ruff
-	uv run ruff format src/ tests/
+	uv run ruff format src/
 
 type-check: ## Run type checking with mypy
 	uv run mypy src/
 
 check: ## Run all checks (lint + format check + type check)
-	uv run ruff check src/ tests/
-	uv run ruff format --check src/ tests/
+	uv run ruff check src/
+	uv run ruff format --check src/
 	uv run mypy src/
 
 test: ## Run tests

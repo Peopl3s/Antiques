@@ -79,18 +79,18 @@ class TestGetArtifactUseCase:
 
         # Assert
         assert result == sample_artifact_dto
-        
+
         # Verify repository calls
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_repository.save.assert_called_once_with(sample_artifact_entity)
-        
+
         # Verify API calls
         mock_museum_api.fetch_artifact.assert_called_once_with(inventory_id)
         mock_catalog_api.publish_artifact.assert_called_once()
-        
+
         # Verify message broker call
         mock_message_broker.publish_new_artifact.assert_called_once()
-        
+
         # Verify mapper calls
         mock_mapper.to_entity.assert_called_once_with(sample_artifact_dto)
         # Note: to_dto is not called when artifact is fetched from external API
@@ -108,7 +108,9 @@ class TestGetArtifactUseCase:
         # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
-        mock_museum_api.fetch_artifact.side_effect = ArtifactNotFoundError("Artifact not found")
+        mock_museum_api.fetch_artifact.side_effect = ArtifactNotFoundError(
+            "Artifact not found"
+        )
 
         # Act & Assert
         with pytest.raises(ArtifactNotFoundError):
@@ -231,8 +233,13 @@ class TestGetArtifactUseCase:
     ):
         """Test era validation with valid values"""
         valid_eras = [
-            "paleolithic", "neolithic", "bronze_age", "iron_age",
-            "antiquity", "middle_ages", "modern"
+            "paleolithic",
+            "neolithic",
+            "bronze_age",
+            "iron_age",
+            "antiquity",
+            "middle_ages",
+            "modern",
         ]
 
         for era_value in valid_eras:
@@ -258,7 +265,14 @@ class TestGetArtifactUseCase:
     ):
         """Test material validation with valid values"""
         valid_materials = [
-            "ceramic", "metal", "stone", "glass", "bone", "wood", "textile", "other"
+            "ceramic",
+            "metal",
+            "stone",
+            "glass",
+            "bone",
+            "wood",
+            "textile",
+            "other",
         ]
 
         for material_value in valid_materials:
@@ -301,7 +315,7 @@ class TestGetArtifactUseCase:
         # Assert
         mock_message_broker.publish_new_artifact.assert_called_once()
         call_args = mock_message_broker.publish_new_artifact.call_args[0][0]
-        
+
         assert isinstance(call_args, ArtifactAdmissionNotificationDTO)
         assert call_args.inventory_id == sample_artifact_entity.inventory_id
         assert call_args.name == sample_artifact_entity.name
@@ -334,7 +348,7 @@ class TestGetArtifactUseCase:
         # Assert
         mock_catalog_api.publish_artifact.assert_called_once()
         call_args = mock_catalog_api.publish_artifact.call_args[0][0]
-        
+
         assert isinstance(call_args, ArtifactCatalogPublicationDTO)
         assert call_args.inventory_id == sample_artifact_entity.inventory_id
         assert call_args.name == sample_artifact_entity.name
@@ -361,7 +375,9 @@ class TestGetArtifactUseCase:
         assert result1 == sample_artifact_dto
 
         # Verify first call
-        mock_repository.get_by_inventory_id.assert_called_once_with(str(inventory_id_uuid))
+        mock_repository.get_by_inventory_id.assert_called_once_with(
+            str(inventory_id_uuid)
+        )
 
         # Reset mocks
         mock_repository.reset_mock()
