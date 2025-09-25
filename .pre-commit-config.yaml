@@ -23,7 +23,7 @@ repos:
     rev: v0.12.12
     hooks:
       - id: ruff
-        args: [ --fix, --exit-non-zero-on-fix ]
+        args: [ --fix, --exit-non-zero-on-fix, --exclude=tests/ ]
         pass_filenames: false
       - id: ruff-format
         args: [ --config=pyproject.toml ]
@@ -42,5 +42,5 @@ repos:
           httpx,
           dishka,
         ]
-        args: [--config-file=pyproject.toml, src/]
+        args: [--config-file=pyproject.toml, src/, --exclude=tests/]
         pass_filenames: false
