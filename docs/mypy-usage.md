@@ -308,3 +308,4 @@ uv run mypy src/ --exclude "tests/.*"
 - [Типы в Python](https://docs.python.org/3/library/typing.html)
 - [Typing cheatsheet](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
 - [PEP 484 - Type Hints](https://peps.python.org/pep-0484/)
+

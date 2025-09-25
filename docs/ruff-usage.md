@@ -281,3 +281,4 @@ uv run ruff check --diff src/
 - [Правила Ruff](https://docs.astral.sh/ruff/rules/)
 - [Конфигурация Ruff](https://docs.astral.sh/ruff/configuration/)
 - [Pre-commit hooks](https://pre-commit.com/)
+
