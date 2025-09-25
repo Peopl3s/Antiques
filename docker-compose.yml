@@ -184,7 +184,7 @@ services:
       target: production
     container_name: antiques-migrate
     environment:
-      DATABASE_URL: postgresql+asyncpg://antiques_user:antiques_password@postgres:5432/antiques
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       postgres:
         condition: service_healthy
