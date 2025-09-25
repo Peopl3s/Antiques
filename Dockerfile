@@ -70,7 +70,7 @@ COPY --chown=appuser:appuser alembic/ ./alembic/
 COPY --chown=appuser:appuser alembic.ini ./
 
 # Create necessary directories
-RUN mkdir -p /app/logs && \
+RUN mkdir -p /app/logs /app/htmlcov && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
@@ -106,7 +106,7 @@ COPY --chown=appuser:appuser docs/ ./docs/
 COPY --chown=appuser:appuser Makefile ./
 
 # Create necessary directories
-RUN mkdir -p /app/logs && \
+RUN mkdir -p /app/logs /app/htmlcov && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
@@ -137,7 +137,7 @@ COPY --chown=appuser:appuser alembic.ini ./
 COPY --chown=appuser:appuser Makefile ./
 
 # Create necessary directories
-RUN mkdir -p /app/logs && \
+RUN mkdir -p /app/logs /app/htmlcov && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
@@ -145,6 +145,12 @@ USER appuser
 
 # Set runtime environment variables
 ENV UV_CACHE_DIR=/tmp/uv-cache
+
+# Ensure dev dependencies are installed (including pytest-cov and pytest-asyncio)
+RUN uv sync --dev
+
+# Explicitly install pytest-cov, pytest-asyncio, and aiosqlite to ensure they're available
+RUN uv pip install pytest-cov pytest-asyncio aiosqlite
 
 # Default command for testing
 CMD ["uv", "run", "pytest", "tests/", "-v", "--cov=src", "--cov-report=html", "--cov-report=term"]

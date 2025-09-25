@@ -78,7 +78,7 @@ class ArtifactDTO(BaseModel):
     @field_validator("acquisition_date")
     @classmethod
     def validate_acquisition_date(cls, value: datetime) -> datetime:
-        if value > datetime.now():
+        if value > datetime.now(UTC):
             raise ValueError("Acquisition date cannot be in the future")
         return value
 

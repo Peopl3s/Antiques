@@ -22,6 +22,26 @@ services:
     networks:
       - antiques-network
 
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: antiques-postgres-test
+    environment:
+      POSTGRES_DB: antiques_test
+      POSTGRES_USER: antiques_user
+      POSTGRES_PASSWORD: antiques_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U antiques_user -d antiques_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - antiques-network
+    profiles:
+      - test
+
   redis:
     image: redis:7-alpine
     container_name: antiques-redis
@@ -207,11 +227,12 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DEBUG: ${DEBUG:-false}
       
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_SERVER: ${POSTGRES_SERVER}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_DB: ${POSTGRES_DB}
+      # Test database configuration
+      POSTGRES_USER: antiques_user
+      POSTGRES_PASSWORD: antiques_password
+      POSTGRES_SERVER: postgres-test
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: antiques_test
       
       MUSEUM_API_BASE: ${MUSEUM_API_BASE}
       CATALOG_API_BASE: ${CATALOG_API_BASE}
@@ -223,13 +244,15 @@ services:
       PUBLISH_RETRIES: ${PUBLISH_RETRIES}
       PUBLISH_RETRY_BACKOFF: ${PUBLISH_RETRY_BACKOFF}
     depends_on:
-      postgres:
+      postgres-test:
         condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
       - ./src:/app/src:ro
       - ./tests:/app/tests:ro
+      - ./alembic:/app/alembic:ro
+      - ./alembic.ini:/app/alembic.ini:ro
       - test_reports:/app/htmlcov
     networks:
       - antiques-network
