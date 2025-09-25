@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -22,9 +22,6 @@ class TestArtifactController:
     ):
         """Helper method to call the controller function with a mock use case"""
         # Import the controller function here to avoid circular imports
-        from src.presentation.api.rest.v1.controllers.artifact_controller import (
-            get_artifact,
-        )
 
         # Call the controller function directly, bypassing dependency injection
         # This is a simplified approach for testing

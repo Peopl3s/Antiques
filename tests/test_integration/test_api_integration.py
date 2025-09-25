@@ -1,13 +1,7 @@
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 import pytest
-
-from src.application.dtos.artifact import ArtifactDTO, EraDTO, MaterialDTO
-from src.domain.entities.artifact import ArtifactEntity
-from src.domain.value_objects.era import Era
-from src.domain.value_objects.material import Material
 
 
 class TestApiIntegration:

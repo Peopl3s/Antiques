@@ -1,10 +1,9 @@
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 
 from src.domain.entities.artifact import ArtifactEntity
-from src.domain.exceptions import InvalidEraException, InvalidMaterialException
 from src.domain.value_objects.era import Era
 from src.domain.value_objects.material import Material
 

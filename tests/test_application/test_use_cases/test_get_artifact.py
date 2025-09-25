@@ -1,6 +1,4 @@
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
 
 import pytest
 
@@ -8,8 +6,6 @@ from src.application.dtos.artifact import (
     ArtifactAdmissionNotificationDTO,
     ArtifactCatalogPublicationDTO,
     ArtifactDTO,
-    EraDTO,
-    MaterialDTO,
 )
 from src.application.exceptions import (
     ArtifactNotFoundError,
@@ -19,8 +15,6 @@ from src.application.exceptions import (
 )
 from src.application.use_cases.get_artifact import GetArtifactUseCase
 from src.domain.entities.artifact import ArtifactEntity
-from src.domain.value_objects.era import Era
-from src.domain.value_objects.material import Material
 
 
 class TestGetArtifactUseCase:

@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -7,7 +7,6 @@ from uuid import uuid4
 from dishka import AsyncContainer, make_async_container
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.application.dtos.artifact import (
@@ -31,7 +30,6 @@ from src.domain.value_objects.era import Era
 from src.domain.value_objects.material import Material
 from src.main import create_app
 from tests.test_infrastructure.test_db.models.test_artifact_model import (
-    TestArtifactModel,
     test_mapper_registry,
 )
 
