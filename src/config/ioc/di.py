@@ -4,6 +4,7 @@ from src.config.ioc.providers import (
     BrokerProvider,
     DatabaseProvider,
     HTTPClientProvider,
+    MapperProvider,
     RepositoryProvider,
     ServiceProvider,
     SettingsProvider,
@@ -19,5 +20,6 @@ def get_providers() -> list[Provider]:
         BrokerProvider(),
         RepositoryProvider(),
         ServiceProvider(),
+        MapperProvider(),
         UseCaseProvider(),
     ]

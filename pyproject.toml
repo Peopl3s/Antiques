@@ -8,7 +8,7 @@ dependencies = [
     "alembic>=1.16.5",
     "dishka>=1.7.2",
     "fastapi>=0.117.1",
-    "faststream>=0.5.48",
+    "faststream[kafka]>=0.5.48",
     "granian>=2.5.4",
     "httpx>=0.28.1",
     "asyncpg>=0.29.0",
@@ -19,6 +19,7 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "stamina>=25.1.0",
     "watchfiles>=1.1.0",
+    "uvicorn[standard]>=0.24.0",
 ]
 
 [project.optional-dependencies]

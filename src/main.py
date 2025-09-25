@@ -22,7 +22,6 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
-    """Фабрика приложения для лучшей тестируемости и гибкости."""
     app = FastAPI(
         title="Антиквариум API",
         version="1.0.0",
@@ -43,17 +42,3 @@ def create_app() -> FastAPI:
 
 app = create_app()
 
-
-if __name__ == "__main__":
-    from granian import Granian
-    from granian.log import LogLevels
-
-    server = Granian(
-        target="main:app",
-        host="0.0.0.0",  # noqa: S104
-        port=8000,
-        reload=True,
-        log_level=LogLevels.info,
-        workers=1,
-    )
-    server.serve()

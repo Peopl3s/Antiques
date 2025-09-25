@@ -1,0 +1,291 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: antiques-postgres
+    environment:
+      POSTGRES_DB: antiques
+      POSTGRES_USER: antiques_user
+      POSTGRES_PASSWORD: antiques_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U antiques_user -d antiques"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - antiques-network
+
+  # Redis for caching and message broker
+  redis:
+    image: redis:7-alpine
+    container_name: antiques-redis
+    command: redis-server --appendonly yes --requirepass redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - antiques-network
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: antiques-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - antiques-network
+
+  # Kafka message broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: antiques-kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - antiques-network
+
+  # Application - Production
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: antiques-app
+    environment:
+      # Application
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DEBUG: ${DEBUG:-false}
+      
+      # Database Configuration
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SERVER: ${POSTGRES_SERVER}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      
+      # External APIs
+      MUSEUM_API_BASE: ${MUSEUM_API_BASE}
+      CATALOG_API_BASE: ${CATALOG_API_BASE}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT}
+      
+      # Message Broker (Kafka)
+      BROKER_URL: ${BROKER_URL}
+      BROKER_NEW_ARTIFACT_QUEUE: ${BROKER_NEW_ARTIFACT_QUEUE}
+      
+      # Retry Configuration
+      PUBLISH_RETRIES: ${PUBLISH_RETRIES}
+      PUBLISH_RETRY_BACKOFF: ${PUBLISH_RETRY_BACKOFF}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - app_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - antiques-network
+
+  # Application - Development
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: antiques-app-dev
+    environment:
+      # Application
+      ENVIRONMENT: ${ENVIRONMENT:-dev}
+      LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
+      DEBUG: ${DEBUG:-true}
+      
+      # Database Configuration
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SERVER: ${POSTGRES_SERVER}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      
+      # External APIs
+      MUSEUM_API_BASE: ${MUSEUM_API_BASE}
+      CATALOG_API_BASE: ${CATALOG_API_BASE}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT}
+      
+      # Message Broker (Kafka)
+      BROKER_URL: ${BROKER_URL}
+      BROKER_NEW_ARTIFACT_QUEUE: ${BROKER_NEW_ARTIFACT_QUEUE}
+      
+      # Retry Configuration
+      PUBLISH_RETRIES: ${PUBLISH_RETRIES}
+      PUBLISH_RETRY_BACKOFF: ${PUBLISH_RETRY_BACKOFF}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./alembic:/app/alembic:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+      - app_logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - antiques-network
+    profiles:
+      - dev
+
+  # Database migrations
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: antiques-migrate
+    environment:
+      DATABASE_URL: postgresql+asyncpg://antiques_user:antiques_password@postgres:5432/antiques
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/app/scripts:ro
+    command: ["/app/scripts/migrate.sh"]
+    networks:
+      - antiques-network
+    profiles:
+      - migrate
+
+  # Testing
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    container_name: antiques-test
+    environment:
+      # Application
+      ENVIRONMENT: ${ENVIRONMENT:-testing}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DEBUG: ${DEBUG:-false}
+      
+      # Database Configuration
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SERVER: ${POSTGRES_SERVER}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      
+      # External APIs
+      MUSEUM_API_BASE: ${MUSEUM_API_BASE}
+      CATALOG_API_BASE: ${CATALOG_API_BASE}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT}
+      
+      # Message Broker (Kafka)
+      BROKER_URL: ${BROKER_URL}
+      BROKER_NEW_ARTIFACT_QUEUE: ${BROKER_NEW_ARTIFACT_QUEUE}
+      
+      # Retry Configuration
+      PUBLISH_RETRIES: ${PUBLISH_RETRIES}
+      PUBLISH_RETRY_BACKOFF: ${PUBLISH_RETRY_BACKOFF}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - test_reports:/app/htmlcov
+    networks:
+      - antiques-network
+    profiles:
+      - test
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: antiques-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - antiques-network
+    profiles:
+      - nginx
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+  app_logs:
+    driver: local
+  test_reports:
+    driver: local
+
+networks:
+  antiques-network:
+    driver: bridge

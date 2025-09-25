@@ -26,7 +26,7 @@ class SettingsProvider(Provider):
 class DatabaseProvider(Provider):
     @provide(scope=Scope.APP)
     def get_engine(self, settings: Settings) -> async_sessionmaker[AsyncSession]:
-        engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+        engine = create_async_engine(str(settings.database_url), echo=settings.debug)
         return get_session_factory(engine)
 
     @provide(scope=Scope.REQUEST)
@@ -40,13 +40,13 @@ class DatabaseProvider(Provider):
 class HTTPClientProvider(Provider):
     @provide(scope=Scope.APP)
     def get_http_client(self, settings: Settings) -> AsyncClient:
-        return AsyncClient(timeout=settings.HTTP_TIMEOUT)
+        return AsyncClient(timeout=settings.http_timeout)
 
 
 class BrokerProvider(Provider):
     @provide(scope=Scope.APP)
     def get_broker(self, settings: Settings) -> KafkaBroker:
-        return KafkaBroker(settings.KAFKA_URL)
+        return KafkaBroker(settings.broker_url)
 
 
 class RepositoryProvider(Provider):
@@ -65,7 +65,7 @@ class ServiceProvider(Provider):
         settings: Settings,
     ) -> ExternalMuseumAPIClient:
         return ExternalMuseumAPIClient(
-            base_url=settings.EXTERNAL_API_BASE_URL, client=client
+            base_url=settings.external_api_base_url, client=client
         )
 
     @provide(scope=Scope.REQUEST)
@@ -73,12 +73,18 @@ class ServiceProvider(Provider):
         self, client: AsyncClient, settings: Settings
     ) -> PublicCatalogAPIClient:
         return PublicCatalogAPIClient(
-            base_url=settings.CATALOG_API_BASE_URL, client=client
+            base_url=settings.catalog_api_base_url, client=client
         )
 
     @provide(scope=Scope.REQUEST)
     def get_message_broker(self, broker: KafkaBroker) -> KafkaPublisher:
         return KafkaPublisher(broker=broker)
+
+
+class MapperProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def get_artifact_mapper(self) -> ArtifactMapper:
+        return ArtifactMapper()
 
 
 class UseCaseProvider(Provider):

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     app_name: str = "Antiquarium Service"
     environment: Literal["local", "dev", "prod"] = "local"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    debug: bool = Field(False, alias="DEBUG")
 
     postgres_user: str = Field(..., alias="POSTGRES_USER")
     postgres_password: str = Field(..., alias="POSTGRES_PASSWORD")
@@ -21,6 +22,14 @@ class Settings(BaseSettings):
     )
     catalog_api_base: str = Field(
         "https://catalog.antiquarium-museum.ru", alias="CATALOG_API_BASE"
+    )
+    
+    # Aliases for compatibility
+    external_api_base_url: str = Field(
+        "https://api.antiquarium-museum.ru", alias="EXTERNAL_API_BASE_URL"
+    )
+    catalog_api_base_url: str = Field(
+        "https://catalog.antiquarium-museum.ru", alias="CATALOG_API_BASE_URL"
     )
 
     http_timeout: float = Field(10.0, alias="HTTP_TIMEOUT")
@@ -38,7 +47,7 @@ class Settings(BaseSettings):
     @computed_field
     def database_url(self) -> PostgresDsn:
         return PostgresDsn.build(
-            scheme="postgresql+psycopg",
+            scheme="postgresql+asyncpg",
             username=self.postgres_user,
             password=self.postgres_password,
             host=self.postgres_server,
