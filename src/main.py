@@ -27,8 +27,8 @@ def create_app() -> FastAPI:
         version="1.0.0",
         description="API для управления артефактами в музее",
         lifespan=lifespan,
-        docs_url="/api/docs",  # Swagger UI
-        redoc_url="/api/redoc",  # ReDoc
+        docs_url="/api/docs",
+        redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
     )
 

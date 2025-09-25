@@ -1,10 +1,6 @@
-# Docker Compose override for local development
-# This file is automatically loaded by docker-compose
-
 version: '3.8'
 
 services:
-  # Override app service for development
   app:
     build:
       target: development
@@ -18,7 +14,6 @@ services:
       - ./alembic.ini:/app/alembic.ini
     command: ["uv", "run", "granian", "--target", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--workers", "1"]
 
-  # Development database with exposed ports
   postgres:
     ports:
       - "5432:5432"
@@ -27,13 +22,11 @@ services:
       POSTGRES_USER: dev_user
       POSTGRES_PASSWORD: dev_password
 
-  # Development Redis with exposed ports
   redis:
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
 
-  # Add development tools
   adminer:
     image: adminer:latest
     container_name: antiques-adminer

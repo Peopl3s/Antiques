@@ -1,6 +1,3 @@
-# Multi-stage Dockerfile for Antiques FastAPI application
-# Following Docker best practices for Python applications
-
 # =============================================================================
 # Stage 1: Base image with system dependencies
 # =============================================================================

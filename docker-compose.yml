@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: antiques-postgres
@@ -23,7 +22,6 @@ services:
     networks:
       - antiques-network
 
-  # Redis for caching and message broker
   redis:
     image: redis:7-alpine
     container_name: antiques-redis
@@ -40,7 +38,6 @@ services:
     networks:
       - antiques-network
 
-  # Zookeeper for Kafka
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: antiques-zookeeper
@@ -52,7 +49,6 @@ services:
     networks:
       - antiques-network
 
-  # Kafka message broker
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: antiques-kafka
@@ -82,7 +78,6 @@ services:
     networks:
       - antiques-network
 
-  # Application - Production
   app:
     build:
       context: .
@@ -135,7 +130,6 @@ services:
     networks:
       - antiques-network
 
-  # Application - Development
   app-dev:
     build:
       context: .
@@ -143,28 +137,23 @@ services:
       target: development
     container_name: antiques-app-dev
     environment:
-      # Application
       ENVIRONMENT: ${ENVIRONMENT:-dev}
       LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
       DEBUG: ${DEBUG:-true}
       
-      # Database Configuration
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_SERVER: ${POSTGRES_SERVER}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       
-      # External APIs
       MUSEUM_API_BASE: ${MUSEUM_API_BASE}
       CATALOG_API_BASE: ${CATALOG_API_BASE}
       HTTP_TIMEOUT: ${HTTP_TIMEOUT}
       
-      # Message Broker (Kafka)
       BROKER_URL: ${BROKER_URL}
       BROKER_NEW_ARTIFACT_QUEUE: ${BROKER_NEW_ARTIFACT_QUEUE}
       
-      # Retry Configuration
       PUBLISH_RETRIES: ${PUBLISH_RETRIES}
       PUBLISH_RETRY_BACKOFF: ${PUBLISH_RETRY_BACKOFF}
     depends_on:
@@ -188,7 +177,6 @@ services:
     profiles:
       - dev
 
-  # Database migrations
   migrate:
     build:
       context: .
@@ -208,7 +196,6 @@ services:
     profiles:
       - migrate
 
-  # Testing
   test:
     build:
       context: .
@@ -216,28 +203,23 @@ services:
       target: testing
     container_name: antiques-test
     environment:
-      # Application
       ENVIRONMENT: ${ENVIRONMENT:-testing}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DEBUG: ${DEBUG:-false}
       
-      # Database Configuration
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_SERVER: ${POSTGRES_SERVER}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       
-      # External APIs
       MUSEUM_API_BASE: ${MUSEUM_API_BASE}
       CATALOG_API_BASE: ${CATALOG_API_BASE}
       HTTP_TIMEOUT: ${HTTP_TIMEOUT}
       
-      # Message Broker (Kafka)
       BROKER_URL: ${BROKER_URL}
       BROKER_NEW_ARTIFACT_QUEUE: ${BROKER_NEW_ARTIFACT_QUEUE}
       
-      # Retry Configuration
       PUBLISH_RETRIES: ${PUBLISH_RETRIES}
       PUBLISH_RETRY_BACKOFF: ${PUBLISH_RETRY_BACKOFF}
     depends_on:
@@ -253,24 +235,6 @@ services:
       - antiques-network
     profiles:
       - test
-
-  # Nginx reverse proxy (optional)
-  nginx:
-    image: nginx:alpine
-    container_name: antiques-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - app
-    restart: unless-stopped
-    networks:
-      - antiques-network
-    profiles:
-      - nginx
 
 volumes:
   postgres_data:
