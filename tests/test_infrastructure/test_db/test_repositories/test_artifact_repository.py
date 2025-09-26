@@ -17,8 +17,6 @@ from tests.test_infrastructure.test_db.repositories.test_artifact_repository_imp
 
 
 class TestArtifactRepository:
-    """Test cases for ArtifactRepository"""
-
     @pytest.mark.asyncio
     async def test_save_artifact_success(self, test_session: AsyncSession):
         """Test successful artifact saving"""
@@ -34,11 +32,8 @@ class TestArtifactRepository:
             description="A beautiful ancient vase",
         )
 
-        # Act
         await repository.save(artifact_entity)
 
-        # Assert
-        # Verify that the artifact was saved by querying the database
         result = await test_session.execute(
             text(
                 f"SELECT * FROM artifacts WHERE inventory_id = '{artifact_entity.inventory_id}'"
@@ -57,11 +52,9 @@ class TestArtifactRepository:
     @pytest.mark.asyncio
     async def test_get_by_inventory_id_found(self, test_session: AsyncSession):
         """Test successful artifact retrieval by inventory ID"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
 
-        # Create and save an artifact
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
             created_at=datetime.now(UTC),
@@ -75,10 +68,8 @@ class TestArtifactRepository:
         test_session.add(artifact_model)
         await test_session.commit()
 
-        # Act
         result = await repository.get_by_inventory_id(str(inventory_id))
 
-        # Assert
         assert result is not None
         assert result.inventory_id == inventory_id
         assert result.name == "Ancient Vase"
@@ -90,14 +81,11 @@ class TestArtifactRepository:
     @pytest.mark.asyncio
     async def test_get_by_inventory_id_not_found(self, test_session: AsyncSession):
         """Test artifact retrieval when not found"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         non_existent_id = str(uuid4())
 
-        # Act
         result = await repository.get_by_inventory_id(non_existent_id)
 
-        # Assert
         assert result is None
 
     @pytest.mark.asyncio
@@ -105,11 +93,9 @@ class TestArtifactRepository:
         self, test_session: AsyncSession
     ):
         """Test artifact retrieval with UUID object"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
 
-        # Create and save an artifact
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
             created_at=datetime.now(UTC),
@@ -123,10 +109,8 @@ class TestArtifactRepository:
         test_session.add(artifact_model)
         await test_session.commit()
 
-        # Act
         result = await repository.get_by_inventory_id(inventory_id)
 
-        # Assert
         assert result is not None
         assert result.inventory_id == inventory_id
 
@@ -135,7 +119,6 @@ class TestArtifactRepository:
         self, test_session: AsyncSession
     ):
         """Test saving artifact with null description"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
@@ -147,10 +130,8 @@ class TestArtifactRepository:
             description=None,
         )
 
-        # Act
         await repository.save(artifact_entity)
 
-        # Assert
         result = await test_session.execute(
             text(
                 f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact_entity.inventory_id)}'"
@@ -164,7 +145,6 @@ class TestArtifactRepository:
     @pytest.mark.asyncio
     async def test_save_multiple_artifacts(self, test_session: AsyncSession):
         """Test saving multiple artifacts"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         artifacts = [
             ArtifactEntity(
@@ -179,11 +159,9 @@ class TestArtifactRepository:
             for i in range(3)
         ]
 
-        # Act
         for artifact in artifacts:
             await repository.save(artifact)
 
-        # Assert
         for artifact in artifacts:
             result = await test_session.execute(
                 text(
@@ -197,7 +175,6 @@ class TestArtifactRepository:
     @pytest.mark.asyncio
     async def test_repository_session_handling(self, test_session: AsyncSession):
         """Test that repository properly handles database sessions"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
@@ -208,27 +185,21 @@ class TestArtifactRepository:
             material=Material(value="ceramic"),
         )
 
-        # Act
         await repository.save(artifact_entity)
 
-        # Assert
-        # The session should still be active and usable
         assert not test_session.in_transaction()
 
-        # Verify we can query the saved artifact
         result = await repository.get_by_inventory_id(str(artifact_entity.inventory_id))
         assert result is not None
 
     @pytest.mark.asyncio
     async def test_artifact_entity_mapping(self, test_session: AsyncSession):
         """Test that database model is correctly mapped to entity"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
         created_at = datetime.now(UTC)
         acquisition_date = datetime(2023, 1, 1, tzinfo=UTC)
 
-        # Create database model directly
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
             created_at=created_at,
@@ -242,10 +213,8 @@ class TestArtifactRepository:
         test_session.add(artifact_model)
         await test_session.commit()
 
-        # Act
         result = await repository.get_by_inventory_id(str(inventory_id))
 
-        # Assert
         assert result is not None
         assert isinstance(result, ArtifactEntity)
         assert result.inventory_id == inventory_id
@@ -260,11 +229,9 @@ class TestArtifactRepository:
     @pytest.mark.asyncio
     async def test_repository_with_invalid_era_value(self, test_session: AsyncSession):
         """Test repository behavior with invalid era value in database"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
 
-        # Create artifact with invalid era (this shouldn't happen in normal operation)
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
             created_at=datetime.now(UTC),
@@ -277,9 +244,7 @@ class TestArtifactRepository:
         test_session.add(artifact_model)
         await test_session.commit()
 
-        # Act & Assert
-        # This should either handle the error gracefully or raise an appropriate exception
-        with pytest.raises(Exception):  # Should raise due to invalid era value
+        with pytest.raises(Exception):
             await repository.get_by_inventory_id(str(inventory_id))
 
     @pytest.mark.asyncio
@@ -287,11 +252,9 @@ class TestArtifactRepository:
         self, test_session: AsyncSession
     ):
         """Test repository behavior with invalid material value in database"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         inventory_id = uuid4()
 
-        # Create artifact with invalid material
         artifact_model = TestArtifactModel(
             inventory_id=inventory_id,
             created_at=datetime.now(UTC),
@@ -304,15 +267,12 @@ class TestArtifactRepository:
         test_session.add(artifact_model)
         await test_session.commit()
 
-        # Act & Assert
-        # This should either handle the error gracefully or raise an appropriate exception
-        with pytest.raises(Exception):  # Should raise due to invalid material value
+        with pytest.raises(Exception):
             await repository.get_by_inventory_id(str(inventory_id))
 
     @pytest.mark.asyncio
     async def test_save_artifact_datetime_handling(self, test_session: AsyncSession):
         """Test that datetime fields are properly handled"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
         acquisition_date = datetime(2023, 1, 1, 12, 30, 45, tzinfo=UTC)
 
@@ -325,10 +285,8 @@ class TestArtifactRepository:
             material=Material(value="ceramic"),
         )
 
-        # Act
         await repository.save(artifact_entity)
 
-        # Assert
         result = await test_session.execute(
             text(
                 f"SELECT * FROM artifacts WHERE inventory_id = '{str(artifact_entity.inventory_id)}'"
@@ -337,13 +295,11 @@ class TestArtifactRepository:
         db_artifact = result.fetchone()
 
         assert db_artifact is not None
-        # The datetime should be preserved (accounting for potential timezone conversion)
-        # SQLite may return datetime as string, so we need to handle both cases
+
         if isinstance(db_artifact.acquisition_date, str):
             parsed_datetime = datetime.fromisoformat(
                 db_artifact.acquisition_date.replace(" ", "T")
             )
-            # Add timezone info to match the expected datetime
             parsed_datetime = parsed_datetime.replace(tzinfo=UTC)
             assert parsed_datetime == acquisition_date
         else:
@@ -352,11 +308,8 @@ class TestArtifactRepository:
     @pytest.mark.asyncio
     async def test_repository_error_handling(self, test_session: AsyncSession):
         """Test repository error handling"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
 
-        # Create an artifact with invalid data that should cause database errors
-        # Use None for a required field (this should violate NOT NULL constraint)
         artifact_entity = ArtifactEntity(
             inventory_id=uuid4(),
             acquisition_date=datetime(2023, 1, 1, tzinfo=UTC),
@@ -366,29 +319,22 @@ class TestArtifactRepository:
             material=Material(value="ceramic"),
         )
 
-        # Act & Assert
-        # This should raise an appropriate exception due to NOT NULL constraint violation
         with pytest.raises(Exception):
             await repository.save(artifact_entity)
 
     @pytest.mark.asyncio
     async def test_get_by_inventory_id_empty_string(self, test_session: AsyncSession):
         """Test artifact retrieval with empty string ID"""
-        # Arrange
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
 
-        # Act & Assert
-        # This should handle the empty string gracefully
         result = await repository.get_by_inventory_id("")
         assert result is None
 
     @pytest.mark.asyncio
     async def test_get_by_inventory_id_malformed_uuid(self, test_session: AsyncSession):
         """Test artifact retrieval with malformed UUID"""
-        # Arrange
+
         repository = TestArtifactRepositorySQLAlchemy(session=test_session)
 
-        # Act & Assert
-        # This should handle malformed UUID gracefully
         result = await repository.get_by_inventory_id("not-a-uuid")
         assert result is None

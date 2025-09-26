@@ -9,8 +9,6 @@ from src.domain.value_objects.material import Material
 
 
 class TestArtifactEntity:
-    """Test cases for ArtifactEntity"""
-
     def test_create_artifact_entity_success(self):
         """Test successful creation of ArtifactEntity"""
         inventory_id = uuid4()

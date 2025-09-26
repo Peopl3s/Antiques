@@ -28,7 +28,6 @@ class TestArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
         self, inventory_id: str | UUID
     ) -> ArtifactEntity | None:
         try:
-            # Convert UUID to string for SQLite compatibility
             inventory_id_str = (
                 str(inventory_id) if isinstance(inventory_id, UUID) else inventory_id
             )
@@ -48,7 +47,6 @@ class TestArtifactRepositorySQLAlchemy(ArtifactRepositoryProtocol):
 
     async def save(self, artifact: ArtifactEntity) -> None:
         try:
-            # Convert UUID to string for SQLite compatibility
             inventory_id_str = str(artifact.inventory_id)
 
             stmt = select(TestArtifactModel).where(

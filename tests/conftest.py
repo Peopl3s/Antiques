@@ -42,7 +42,6 @@ def anyio_backend() -> str:
 
 @pytest.fixture
 async def test_engine() -> AsyncGenerator[Any, None]:
-    # Use SQLite for testing (simpler setup)
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
@@ -54,7 +53,6 @@ async def test_engine() -> AsyncGenerator[Any, None]:
 
 @pytest.fixture
 async def test_session(test_engine: Any) -> AsyncGenerator[AsyncSession, None]:
-    # Create the artifacts table using SQLAlchemy metadata
     async with test_engine.begin() as conn:
         await conn.run_sync(test_mapper_registry.metadata.create_all)
 
@@ -63,7 +61,6 @@ async def test_session(test_engine: Any) -> AsyncGenerator[AsyncSession, None]:
     )
     async with async_session() as session:
         yield session
-        # Clean up the session
         await session.rollback()
 
 

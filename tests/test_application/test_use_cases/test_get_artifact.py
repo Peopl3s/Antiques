@@ -18,8 +18,6 @@ from src.domain.entities.artifact import ArtifactEntity
 
 
 class TestGetArtifactUseCase:
-    """Test cases for GetArtifactUseCase"""
-
     @pytest.mark.asyncio
     async def test_execute_artifact_found_in_repository(
         self,
@@ -30,15 +28,12 @@ class TestGetArtifactUseCase:
         sample_artifact_dto: ArtifactDTO,
     ):
         """Test successful execution when artifact is found in local repository"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = sample_artifact_entity
         mock_mapper.to_dto.return_value = sample_artifact_dto
 
-        # Act
         result = await get_artifact_use_case.execute(inventory_id)
 
-        # Assert
         assert result == sample_artifact_dto
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_mapper.to_dto.assert_called_once_with(sample_artifact_entity)
@@ -61,34 +56,25 @@ class TestGetArtifactUseCase:
         sample_publication_dto: ArtifactCatalogPublicationDTO,
     ):
         """Test successful execution when artifact is fetched from external API"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.return_value = sample_artifact_dto
         mock_mapper.to_entity.return_value = sample_artifact_entity
         mock_catalog_api.publish_artifact.return_value = "public_id_123"
 
-        # Act
         result = await get_artifact_use_case.execute(inventory_id)
 
-        # Assert
         assert result == sample_artifact_dto
 
-        # Verify repository calls
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_repository.save.assert_called_once_with(sample_artifact_entity)
 
-        # Verify API calls
         mock_museum_api.fetch_artifact.assert_called_once_with(inventory_id)
         mock_catalog_api.publish_artifact.assert_called_once()
 
-        # Verify message broker call
         mock_message_broker.publish_new_artifact.assert_called_once()
 
-        # Verify mapper calls
         mock_mapper.to_entity.assert_called_once_with(sample_artifact_dto)
-        # Note: to_dto is not called when artifact is fetched from external API
-        # because the use case returns the original artifact_dto from the API
 
     @pytest.mark.asyncio
     async def test_execute_artifact_not_found_in_external_api(
@@ -99,18 +85,15 @@ class TestGetArtifactUseCase:
         sample_artifact_entity: ArtifactEntity,
     ):
         """Test execution when artifact is not found in external API"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.side_effect = ArtifactNotFoundError(
             "Artifact not found"
         )
 
-        # Act & Assert
         with pytest.raises(ArtifactNotFoundError):
             await get_artifact_use_case.execute(inventory_id)
 
-        # Verify calls
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_museum_api.fetch_artifact.assert_called_once_with(inventory_id)
         mock_repository.save.assert_not_called()
@@ -124,16 +107,13 @@ class TestGetArtifactUseCase:
         sample_artifact_entity: ArtifactEntity,
     ):
         """Test execution when external API call fails"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.side_effect = Exception("API Error")
 
-        # Act & Assert
         with pytest.raises(FailedFetchArtifactMuseumAPIException):
             await get_artifact_use_case.execute(inventory_id)
 
-        # Verify calls
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_museum_api.fetch_artifact.assert_called_once_with(inventory_id)
         mock_repository.save.assert_not_called()
@@ -150,18 +130,15 @@ class TestGetArtifactUseCase:
         sample_artifact_entity: ArtifactEntity,
     ):
         """Test execution when message broker publish fails"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.return_value = sample_artifact_dto
         mock_mapper.to_entity.return_value = sample_artifact_entity
         mock_message_broker.publish_new_artifact.side_effect = Exception("Broker Error")
 
-        # Act & Assert
         with pytest.raises(FailedPublishArtifactMessageBrokerException):
             await get_artifact_use_case.execute(inventory_id)
 
-        # Verify calls
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_museum_api.fetch_artifact.assert_called_once_with(inventory_id)
         mock_repository.save.assert_called_once_with(sample_artifact_entity)
@@ -180,18 +157,15 @@ class TestGetArtifactUseCase:
         sample_artifact_entity: ArtifactEntity,
     ):
         """Test execution when catalog API publish fails"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.return_value = sample_artifact_dto
         mock_mapper.to_entity.return_value = sample_artifact_entity
         mock_catalog_api.publish_artifact.side_effect = Exception("Catalog Error")
 
-        # Act & Assert
         with pytest.raises(FailedPublishArtifactInCatalogException):
             await get_artifact_use_case.execute(inventory_id)
 
-        # Verify calls
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id)
         mock_museum_api.fetch_artifact.assert_called_once_with(inventory_id)
         mock_repository.save.assert_called_once_with(sample_artifact_entity)
@@ -208,15 +182,12 @@ class TestGetArtifactUseCase:
         sample_artifact_dto: ArtifactDTO,
     ):
         """Test execution with UUID input instead of string"""
-        # Arrange
         inventory_id = sample_artifact_entity.inventory_id
         mock_repository.get_by_inventory_id.return_value = sample_artifact_entity
         mock_mapper.to_dto.return_value = sample_artifact_dto
 
-        # Act
         result = await get_artifact_use_case.execute(inventory_id)
 
-        # Assert
         assert result == sample_artifact_dto
         mock_repository.get_by_inventory_id.assert_called_once_with(str(inventory_id))
 
@@ -297,16 +268,13 @@ class TestGetArtifactUseCase:
         sample_artifact_entity: ArtifactEntity,
     ):
         """Test that notification DTO is created correctly"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.return_value = sample_artifact_dto
         mock_mapper.to_entity.return_value = sample_artifact_entity
 
-        # Act
         await get_artifact_use_case.execute(inventory_id)
 
-        # Assert
         mock_message_broker.publish_new_artifact.assert_called_once()
         call_args = mock_message_broker.publish_new_artifact.call_args[0][0]
 
@@ -329,17 +297,14 @@ class TestGetArtifactUseCase:
         sample_artifact_entity: ArtifactEntity,
     ):
         """Test that publication DTO is created correctly"""
-        # Arrange
         inventory_id = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = None
         mock_museum_api.fetch_artifact.return_value = sample_artifact_dto
         mock_mapper.to_entity.return_value = sample_artifact_entity
         mock_catalog_api.publish_artifact.return_value = "public_id_123"
 
-        # Act
         await get_artifact_use_case.execute(inventory_id)
 
-        # Assert
         mock_catalog_api.publish_artifact.assert_called_once()
         call_args = mock_catalog_api.publish_artifact.call_args[0][0]
 
@@ -360,7 +325,6 @@ class TestGetArtifactUseCase:
         sample_artifact_dto: ArtifactDTO,
     ):
         """Test execution with different inventory ID formats"""
-        # Test with UUID object
         inventory_id_uuid = sample_artifact_entity.inventory_id
         mock_repository.get_by_inventory_id.return_value = sample_artifact_entity
         mock_mapper.to_dto.return_value = sample_artifact_dto
@@ -368,16 +332,13 @@ class TestGetArtifactUseCase:
         result1 = await get_artifact_use_case.execute(inventory_id_uuid)
         assert result1 == sample_artifact_dto
 
-        # Verify first call
         mock_repository.get_by_inventory_id.assert_called_once_with(
             str(inventory_id_uuid)
         )
 
-        # Reset mocks
         mock_repository.reset_mock()
         mock_mapper.reset_mock()
 
-        # Test with string
         inventory_id_str = str(sample_artifact_entity.inventory_id)
         mock_repository.get_by_inventory_id.return_value = sample_artifact_entity
         mock_mapper.to_dto.return_value = sample_artifact_dto
@@ -385,5 +346,4 @@ class TestGetArtifactUseCase:
         result2 = await get_artifact_use_case.execute(inventory_id_str)
         assert result2 == sample_artifact_dto
 
-        # Verify second call
         mock_repository.get_by_inventory_id.assert_called_once_with(inventory_id_str)
