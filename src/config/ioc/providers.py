@@ -12,7 +12,7 @@ from src.config.base import Settings
 from src.infrastructures.broker.publisher import KafkaPublisher
 from src.infrastructures.cache.redis_client import RedisCacheClient
 from src.infrastructures.db.repositories.artifact import ArtifactRepositorySQLAlchemy
-from src.infrastructures.db.session import get_session_factory
+from src.infrastructures.db.session import create_engine, get_session_factory
 from src.infrastructures.http.clients import (
     ExternalMuseumAPIClient,
     PublicCatalogAPIClient,
@@ -28,7 +28,7 @@ class SettingsProvider(Provider):
 class DatabaseProvider(Provider):
     @provide(scope=Scope.APP)
     def get_engine(self, settings: Settings) -> async_sessionmaker[AsyncSession]:
-        engine = create_async_engine(str(settings.database_url), echo=settings.debug)
+        engine = create_engine(str(settings.database_url), is_echo=settings.debug)
         return get_session_factory(engine)
 
     @provide(scope=Scope.REQUEST)
