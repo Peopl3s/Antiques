@@ -483,27 +483,25 @@ http://localhost:8000/api/openapi.json
 
         @dataclass(frozen=True, slots=True, kw_only=True)
         class SqlAlchemyUnitOfWork(UnitOfWorkProtocol):
-           session: AsyncSession
-           artifact_repository = ArtifactRepositorySQLAlchemy
-
+            session: AsyncSession
+            artifact_repository: ArtifactRepositorySQLAlchemy
+        
             async def __aenter__(self):
-                self.artifacts = self.artifact_repository(session=self.session)
+                self.artifacts = self.artifact_repository
                 return self
-
+        
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 if exc_type is None:
                     await self.commit()
                 else:
                     await self.rollback()
-                await self._session.close()
-
+                await self.session.close()
+        
             async def commit(self):
-                if self.session:
-                    await self.ssession.commit()
-
+                await self.session.commit()
+        
             async def rollback(self):
-                if self.session:
-                    await self.session.rollback()
+                await self.session.rollback()
         ```
 
 3.  **Использование в Use Cases**:
