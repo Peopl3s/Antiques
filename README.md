@@ -1,4 +1,4 @@
-from src.domain.entities.artifact import ArtifactEntity<div align="center">
+<div align="center">
 
 # 🏛️ Антиквариум API
 
