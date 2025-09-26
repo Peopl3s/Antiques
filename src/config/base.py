@@ -1,6 +1,6 @@
 from typing import Literal, cast, final
 
-from pydantic import Field, PostgresDsn, computed_field
+from pydantic import Field, PostgresDsn, RedisDsn, computed_field
 from pydantic_settings import BaseSettings
 
 
@@ -43,6 +43,17 @@ class Settings(BaseSettings):
 
     publish_retries: int = Field(3, alias="PUBLISH_RETRIES")
     publish_retry_backoff: float = Field(0.5, alias="PUBLISH_RETRY_BACKOFF")
+
+    # Redis Configuration
+    redis_url: RedisDsn = Field(
+        RedisDsn("redis://:redis_password@redis:6379/0"), alias="REDIS_URL"
+    )
+    redis_password: str = Field("redis_password", alias="REDIS_PASSWORD")
+    redis_port: int = Field(6379, alias="REDIS_PORT")
+    redis_host: str = Field("redis", alias="REDIS_HOST")
+    redis_db: int = Field(0, alias="REDIS_DB")
+    redis_cache_ttl: int = Field(3600, alias="REDIS_CACHE_TTL")  # 1 hour default TTL
+    redis_cache_prefix: str = Field("antiques:", alias="REDIS_CACHE_PREFIX")
 
     @computed_field
     def database_url(self) -> PostgresDsn:

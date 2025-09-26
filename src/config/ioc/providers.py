@@ -3,12 +3,14 @@ from collections.abc import AsyncIterator
 from dishka import Provider, Scope, provide
 from faststream.kafka import KafkaBroker
 from httpx import AsyncClient
+import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.application.mappers import ArtifactMapper
 from src.application.use_cases.get_artifact import GetArtifactUseCase
 from src.config.base import Settings
 from src.infrastructures.broker.publisher import KafkaPublisher
+from src.infrastructures.cache.redis_client import RedisCacheClient
 from src.infrastructures.db.repositories.artifact import ArtifactRepositorySQLAlchemy
 from src.infrastructures.db.session import get_session_factory
 from src.infrastructures.http.clients import (
@@ -87,6 +89,22 @@ class MapperProvider(Provider):
         return ArtifactMapper()
 
 
+class CacheProvider(Provider):
+    @provide(scope=Scope.APP)
+    async def get_cache_service(self, settings: Settings) -> RedisCacheClient:
+        redis_client = await redis.from_url(
+            str(settings.redis_url),
+            encoding="utf-8",
+            decode_responses=False,
+            health_check_interval=30,
+            max_connections=10,
+            retry_on_timeout=True,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+        )
+        return RedisCacheClient(client=redis_client, ttl=settings.redis_cache_ttl)
+
+
 class UseCaseProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_register_artifact_use_case(
@@ -96,6 +114,7 @@ class UseCaseProvider(Provider):
         catalog_api_client: PublicCatalogAPIClient,
         message_broker: KafkaPublisher,
         artifact_mapper: ArtifactMapper,
+        cache_client: RedisCacheClient,
     ) -> GetArtifactUseCase:
         return GetArtifactUseCase(
             repository=repository,
@@ -103,4 +122,5 @@ class UseCaseProvider(Provider):
             catalog_api_client=catalog_api_client,
             message_broker=message_broker,
             artifact_mapper=artifact_mapper,
+            cache_client=cache_client,
         )

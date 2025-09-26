@@ -2,6 +2,7 @@ from dishka import Provider
 
 from src.config.ioc.providers import (
     BrokerProvider,
+    CacheProvider,
     DatabaseProvider,
     HTTPClientProvider,
     MapperProvider,
@@ -21,5 +22,6 @@ def get_providers() -> list[Provider]:
         RepositoryProvider(),
         ServiceProvider(),
         MapperProvider(),
+        CacheProvider(),
         UseCaseProvider(),
     ]

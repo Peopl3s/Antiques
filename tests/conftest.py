@@ -16,6 +16,7 @@ from src.application.dtos.artifact import (
     EraDTO,
     MaterialDTO,
 )
+from src.application.interfaces.cache import CacheProtocol
 from src.application.interfaces.http_clients import (
     ExternalMuseumAPIProtocol,
     PublicCatalogAPIProtocol,
@@ -135,12 +136,21 @@ def mock_mapper() -> MagicMock:
 
 
 @pytest.fixture
+def mock_cache_client() -> AsyncMock:
+    mock = AsyncMock(spec=CacheProtocol)
+    # By default, return None to simulate cache miss
+    mock.get.return_value = None
+    return mock
+
+
+@pytest.fixture
 def get_artifact_use_case(
     mock_repository: AsyncMock,
     mock_museum_api: AsyncMock,
     mock_catalog_api: AsyncMock,
     mock_message_broker: AsyncMock,
     mock_mapper: MagicMock,
+    mock_cache_client: AsyncMock,
 ) -> GetArtifactUseCase:
     return GetArtifactUseCase(
         repository=mock_repository,
@@ -148,6 +158,7 @@ def get_artifact_use_case(
         catalog_api_client=mock_catalog_api,
         message_broker=mock_message_broker,
         artifact_mapper=mock_mapper,
+        cache_client=mock_cache_client,
     )
 
 

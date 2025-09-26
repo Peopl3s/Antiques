@@ -149,7 +149,11 @@ ENV UV_CACHE_DIR=/tmp/uv-cache
 # Ensure dev dependencies are installed (including pytest-cov and pytest-asyncio)
 RUN uv sync --dev
 
-# Explicitly install pytest-cov, pytest-asyncio, and aiosqlite to ensure they're available
+# Install setuptools to provide distutils module for aioredis compatibility with Python 3.12
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+RUN uv pip install setuptools
+
+# Explicitly install redis, pytest-cov, pytest-asyncio, and aiosqlite to ensure they're available
 RUN uv pip install pytest-cov pytest-asyncio aiosqlite
 
 # Default command for testing
